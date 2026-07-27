@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07111f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="description" content="PDF belgelerini tarayıcıda düzenlemek ve belge biçimleri arasında dönüşüm yapmak için pratik araçlar." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href="https://belgelab.com.tr/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="tr_TR" />
+    <meta property="og:site_name" content="BelgeLab" />
+    <meta property="og:title" content="BelgeLab | PDF ve Belge Araçları" />
+    <meta property="og:description" content="PDF birleştirme, küçültme, kırpma ve belge dönüştürme araçlarını tek ekranda kullanın." />
+    <meta property="og:url" content="https://belgelab.com.tr/" />
+    <meta property="og:image" content="https://belgelab.com.tr/icon-512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta name="apple-mobile-web-app-title" content="BelgeLab" />
+    <title>BelgeLab | PDF ve Belge Araçları</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "BelgeLab",
+        "url": "https://belgelab.com.tr/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "tr",
+        "description": "PDF düzenleme, sıkıştırma, kırpma ve ofis belgesi dönüştürme araçları."
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/">Belge<span>Lab</span></a>
+      <nav class="category-nav" aria-label="Araç kategorileri">
+        <button class="category-pill active" data-filter="all">Hepsi</button>
+        <button class="category-pill" data-filter="workflow">İş akışları</button>
+        <button class="category-pill" data-filter="create">Belge oluştur</button>
+        <button class="category-pill" data-filter="edit">PDF düzenle</button>
+        <button class="category-pill" data-filter="improve">PDF'i iyileştir</button>
+        <button class="category-pill" data-filter="convert">PDF'e dönüştür</button>
+        <button class="category-pill" data-filter="from-pdf">PDF'i dönüştür</button>
+        <button class="category-pill" data-filter="security">PDF Güvenliği</button>
+      </nav>
+      <button id="installBtn" class="install-btn" hidden>Uygulamayı yükle</button>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">BELGELERİNİZ İÇİN DİJİTAL ÇALIŞMA ALANI</p>
+        <h1>Dosyanı seç, işlemini tamamla</h1>
+        <p>Günlük belge işlerini sade ve anlaşılır araçlarla tek ekrandan yönetin.</p>
+      </section>
+
+      <aside class="ad-slot" data-ad-position="top" aria-label="Reklam" hidden><span>Reklam</span></aside>
+
+      <section class="tool-grid" id="tools" aria-label="PDF araçları">
+        <button class="tool-card featured" data-category="workflow edit" data-target="editor">
+          <span class="tool-icon merge-icon" aria-hidden="true"><i>↘</i><i>↖</i></span>
+          <strong>PDF birleştir</strong>
+          <span>Birden fazla PDF'i seçtiğiniz sırayla tek bir dosyanın sonunda buluşturun.</span>
+        </button>
+        <button class="tool-card" data-category="edit" data-target="editor">
+          <span class="tool-icon split-icon" aria-hidden="true"><i>↖</i><i>↘</i></span>
+          <strong>PDF sayfalarını düzenle</strong>
+          <span>Belgenizin sayfa akışını kontrol edin; gereksiz sayfaları kaldırıp yönlerini değiştirin.</span>
+        </button>
+        <button class="tool-card" data-category="improve" data-pdf-tool="compress">
+          <span class="tool-icon compress-icon" aria-hidden="true"><i>↘</i><i>↙</i><i>↗</i><i>↖</i></span>
+          <strong>PDF küçültme</strong>
+          <span>Hafif, dengeli veya güçlü oranı seçin. Sıkıştırılmış çıktı görüntü tabanlıdır; metin seçimi korunmaz.</span>
+        </button>
+        <button class="tool-card" data-category="create" data-create-tool="word">
+          <span class="tool-icon file-icon word" aria-hidden="true">W</span>
+          <strong>Word oluştur</strong>
+          <span>Başlık ve paragraflarınızı yazın; çalışmanızı düzenlenebilir DOCX olarak kaydedin.</span>
+        </button>
+        <button class="tool-card" data-category="create" data-create-tool="excel">
+          <span class="tool-icon file-icon excel" aria-hidden="true">X</span>
+          <strong>Excel oluştur</strong>
+          <span>Hücrelere veri veya formül girin; tabloyu gerçek XLSX çalışma kitabı olarak indirin.</span>
+        </button>
+        <button class="tool-card" data-category="create" data-create-tool="powerpoint">
+          <span class="tool-icon file-icon powerpoint" aria-hidden="true">P</span>
+          <strong>PowerPoint oluştur</strong>
+          <span>Slayt başlıklarını ve içeriklerini hazırlayıp PPTX sunumu olarak kaydedin.</span>
+        </button>
+        <button class="tool-card" data-category="from-pdf" data-operation="pdf-to-docx">
+          <span class="tool-icon file-icon word" aria-hidden="true">W</span>
+          <strong>PDF'den Word'e</strong>
+          <span>PDF içindeki okunabilir metinleri yeni bir DOCX belgesine aktarın.</span>
+        </button>
+        <button class="tool-card" data-category="from-pdf" data-operation="pdf-to-pptx">
+          <span class="tool-icon file-icon powerpoint" aria-hidden="true">P</span>
+          <strong>PDF'den PowerPoint'e</strong>
+          <span>PDF metinlerinden üzerinde çalışabileceğiniz sade bir sunum taslağı oluşturun.</span>
+        </button>
+        <button class="tool-card" data-category="from-pdf" data-operation="pdf-to-xlsx">
+          <span class="tool-icon file-icon excel" aria-hidden="true">X</span>
+          <strong>PDF'den Excel'e</strong>
+          <span>Belgeden çıkarılan metinleri düzenleyebileceğiniz bir çalışma sayfasına taşıyın.</span>
+        </button>
+        <button class="tool-card" data-category="convert" data-operation="docx-to-pdf">
+          <span class="tool-icon file-icon word" aria-hidden="true">W</span>
+          <strong>Word'den PDF'e</strong>
+          <span>Word belgenizdeki metinleri taşınabilir ve paylaşılabilir bir PDF'e dönüştürün.</span>
+        </button>
+        <button class="tool-card" data-category="convert" data-operation="dwg-to-pdf">
+          <span class="tool-icon file-icon dwg" aria-hidden="true">DWG</span>
+          <strong>DWG'den PDF'e</strong>
+          <span>CAD çiziminizi kolayca paylaşılabilen bir PDF belgesine dönüştürün.</span>
+        </button>
+        <button class="tool-card" data-category="convert" data-operation="pptx-to-pdf">
+          <span class="tool-icon file-icon powerpoint" aria-hidden="true">P</span>
+          <strong>PowerPoint'ten PDF'e</strong>
+          <span>Sunum metinlerinizi tek bir PDF belgesinde okunabilir hâle getirin.</span>
+        </button>
+        <button class="tool-card" data-category="convert" data-operation="xlsx-to-pdf">
+          <span class="tool-icon file-icon excel" aria-hidden="true">X</span>
+          <strong>Excel'den PDF'e</strong>
+          <span>Çalışma sayfanızdaki hücre içeriklerinden sade bir PDF çıktısı hazırlayın.</span>
+        </button>
+        <button class="tool-card" data-category="edit" data-target="editor">
+          <span class="tool-icon edit-icon" aria-hidden="true">T</span>
+          <strong>PDF'i düzenle</strong>
+          <span>Sayfaları önizleyin, düzenlemelerinizi uygulayın ve yeni kopyayı cihazınıza kaydedin.</span>
+        </button>
+        <button class="tool-card" data-category="convert" data-pdf-tool="pdf-to-jpg">
+          <span class="tool-icon image-icon" aria-hidden="true">JPG</span>
+          <strong>PDF'den JPG'ye</strong>
+          <span>PDF sayfalarını ayrı ayrı yüksek kaliteli JPG görselleri olarak dışarı aktarın.</span>
+        </button>
+        <button class="tool-card" data-category="convert" data-pdf-tool="jpg-to-pdf">
+          <span class="tool-icon image-icon" aria-hidden="true">PDF</span>
+          <strong>Görselden PDF'e</strong>
+          <span>JPG ve PNG görsellerinizi sıralı sayfalardan oluşan tek bir PDF'te birleştirin.</span>
+        </button>
+        <button class="tool-card" data-category="edit" data-pdf-tool="sign">
+          <span class="tool-icon action-icon" aria-hidden="true">✒</span>
+          <strong>PDF imzala</strong>
+          <span>İmza metninizi belgenin seçtiğiniz sayfasına güvenli biçimde yerleştirin.</span>
+        </button>
+        <button class="tool-card" data-category="security edit" data-pdf-tool="watermark">
+          <span class="tool-icon action-icon" aria-hidden="true">W</span>
+          <strong>Filigran ekle</strong>
+          <span>Her sayfaya konumlandırılmış, yarı saydam bir metin filigranı uygulayın.</span>
+        </button>
+        <button class="tool-card" data-category="edit" data-pdf-tool="rotate-all">
+          <span class="tool-icon action-icon" aria-hidden="true">↻</span>
+          <strong>Tüm sayfaları döndür</strong>
+          <span>Belgedeki bütün sayfaların yönünü tek işlemde 90, 180 veya 270 derece değiştirin.</span>
+        </button>
+        <button class="tool-card" data-category="security" data-pdf-tool="unlock">
+          <span class="tool-icon security-icon" aria-hidden="true">⌁</span>
+          <strong>PDF kilidini aç</strong>
+          <span>Parolasını bildiğiniz bir PDF'in kilitsiz bir kopyasını oluşturun.</span>
+        </button>
+        <button class="tool-card" data-category="security" data-pdf-tool="protect">
+          <span class="tool-icon security-icon" aria-hidden="true">●</span>
+          <strong>PDF'i parolayla koru</strong>
+          <span>Belgenizin açılması için kullanıcı tarafından belirlenen bir parola ekleyin.</span>
+        </button>
+        <button class="tool-card" data-category="edit" data-pdf-tool="page-numbers">
+          <span class="tool-icon action-icon" aria-hidden="true">123</span>
+          <strong>Sayfa numarası ekle</strong>
+          <span>Belgenin alt bölümüne otomatik ve düzenli sayfa numaraları yerleştirin.</span>
+        </button>
+        <button class="tool-card" data-category="improve" data-pdf-tool="repair">
+          <span class="tool-icon repair-icon" aria-hidden="true">✣</span>
+          <strong>PDF'i onar</strong>
+          <span>Okunabilen sayfaları yeniden yazarak bozuk PDF yapısını kurtarmayı deneyin.</span>
+        </button>
+        <button class="tool-card" data-category="edit" data-pdf-tool="crop">
+          <span class="tool-icon action-icon" aria-hidden="true">⌗</span>
+          <strong>PDF kırpma</strong>
+          <span>Tüm sayfalardaki kenar boşluklarını belirlediğiniz oranda eşit biçimde azaltın.</span>
+        </button>
+        <button class="tool-card" data-category="workflow" data-pdf-tool="compare">
+          <span class="tool-icon compare-icon" aria-hidden="true">⇄</span>
+          <strong>PDF karşılaştırma</strong>
+          <span>İki PDF'in metinlerini karşılaştırıp farklı satırları bir raporda görüntüleyin.</span>
+        </button>
+        <button class="tool-card" data-category="from-pdf" data-pdf-tool="markdown">
+          <span class="tool-icon action-icon" aria-hidden="true">#</span>
+          <strong>PDF'den Markdown'a</strong>
+          <span>Belgeden okunabilen metni sade bir Markdown dosyasına aktarın.</span>
+        </button>
+      </section>
+
+      <aside class="ad-slot" data-ad-position="content" aria-label="Reklam" hidden><span>Reklam</span></aside>
+
+      <section class="panel document-creator" id="documentCreator" hidden>
+        <div class="quick-tool-heading">
+          <div>
+            <span class="eyebrow">BELGE OLUŞTURUCU</span>
+            <h2 id="creatorTitle">Yeni belge</h2>
+            <p id="creatorDescription">İçeriğinizi hazırlayın ve cihazınıza kaydedin.</p>
+          </div>
+          <button id="closeCreator" class="secondary" type="button">Kapat</button>
+        </div>
+        <p class="processing-notice processing-notice--server">
+          <strong>Sunucuda işlenir</strong>
+          Girdiğiniz içerik, belgeyi oluşturmak için uygulama sunucusuna gönderilir ve kalıcı belge arşivine alınmaz.
+        </p>
+        <label class="creator-filename">
+          Dosya adı
+          <span><input id="creatorFilename" value="yeni-belge"><em id="creatorExtension">.docx</em></span>
+        </label>
+
+        <div id="wordCreator" class="creator-workspace" hidden>
+          <div class="creator-toolbar" aria-label="Word biçimlendirme araçları">
+            <button type="button" data-command="bold"><strong>K</strong></button>
+            <button type="button" data-command="italic"><em>İ</em></button>
+            <button type="button" data-command="underline"><u>A</u></button>
+            <button type="button" data-command="formatBlock" data-value="h1">Başlık</button>
+            <button type="button" data-command="insertUnorderedList">Liste</button>
+            <button type="button" data-command="justifyLeft">Sola</button>
+            <button type="button" data-command="justifyCenter">Ortala</button>
+          </div>
+          <div id="wordEditor" class="word-editor" contenteditable="true">
+            <h1>Belge başlığı</h1>
+            <p>Metninizi buraya yazmaya başlayın.</p>
+          </div>
+        </div>
+
+        <div id="excelCreator" class="creator-workspace" hidden>
+          <div class="creator-toolbar">
+            <button id="addExcelRow" type="button">Satır ekle</button>
+            <button id="addExcelColumn" type="button">Sütun ekle</button>
+            <button id="removeExcelRow" class="secondary" type="button">Son satırı sil</button>
+          </div>
+          <div class="sheet-scroll"><table id="excelGrid" class="excel-grid"></table></div>
+          <p class="creator-hint">Formülleri <code>=SUM(A1:A3)</code> veya <code>=A1*B1</code> biçiminde girebilirsiniz.</p>
+        </div>
+
+        <div id="powerpointCreator" class="creator-workspace" hidden>
+          <div class="creator-toolbar">
+            <button id="addSlide" type="button">Slayt ekle</button>
+            <button id="removeSlide" class="secondary" type="button">Seçili slaytı sil</button>
+          </div>
+          <div class="slide-builder">
+            <aside id="slideList" class="slide-list"></aside>
+            <div class="slide-canvas">
+              <input id="slideTitle" class="slide-title-input" placeholder="Slayt başlığı">
+              <textarea id="slideBody" class="slide-body-input" placeholder="Slayt içeriği"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <button id="saveCreatedDocument" class="save-created-document" type="button">Belgeyi kaydet</button>
+        <p id="creatorStatus" class="status">Düzenlemeye başlayabilirsiniz.</p>
+      </section>
+
+      <section class="panel quick-tool-panel" id="quickTool" hidden>
+        <div class="quick-tool-heading">
+          <div>
+            <span class="eyebrow">HIZLI ARAÇ</span>
+            <h2 id="quickToolTitle">PDF aracı</h2>
+            <p id="quickToolDescription"></p>
+          </div>
+          <button id="closeQuickTool" class="secondary" type="button">Kapat</button>
+        </div>
+        <p id="quickProcessingNotice" class="processing-notice" role="status"></p>
+        <label class="converter-dropzone quick-file-label" for="quickToolFiles">
+          <strong id="quickFilePrompt">Dosyanızı seçin</strong>
+          <span id="quickFileTypes">PDF</span>
+        </label>
+        <input id="quickToolFiles" type="file" hidden>
+        <div id="quickSecondFileWrap" hidden>
+          <label class="converter-dropzone quick-file-label" for="quickSecondFile">
+            <strong>Karşılaştırılacak ikinci PDF'i seçin</strong>
+            <span>PDF</span>
+          </label>
+          <input id="quickSecondFile" type="file" accept="application/pdf" hidden>
+        </div>
+        <div id="quickOptions" class="quick-options"></div>
+        <div id="cropWorkspace" class="crop-workspace" hidden>
+          <div class="crop-toolbar">
+            <strong>Kırpılacak alanı seçin</strong>
+            <span>PDF üzerinde bir dikdörtgen çizin. Seçili alanı içinden sürükleyerek taşıyabilirsiniz.</span>
+            <div class="crop-page-controls">
+              <button id="cropPrevPage" class="secondary" type="button" aria-label="Önceki sayfa">←</button>
+              <span id="cropPageLabel">Sayfa 1 / 1</span>
+              <button id="cropNextPage" class="secondary" type="button" aria-label="Sonraki sayfa">→</button>
+              <button id="cropReset" class="secondary" type="button">Seçimi sıfırla</button>
+            </div>
+          </div>
+          <div id="cropStage" class="crop-stage">
+            <canvas id="cropCanvas"></canvas>
+            <div id="cropSelection" class="crop-selection" hidden aria-hidden="true"></div>
+          </div>
+          <p class="crop-hint">Yalnızca görüntülenen sayfanın seçtiğiniz alanı kırpılarak yeni PDF'e kaydedilir.</p>
+        </div>
+        <span id="runQuickToolHome"></span>
+        <button id="runQuickTool" type="button">İşlemi başlat</button>
+        <p id="quickToolStatus" class="status">Dosya seçimi bekleniyor.</p>
+      </section>
+
+      <div class="section-heading" id="editor">
+        <span>PDF EDİTÖRÜ</span>
+        <h2>Belgenizi düzenleyin</h2>
+      </div>
+
+      <div class="app-shell">
+      <section class="panel upload-panel">
+        <h2>PDF'lerinizi ekleyin</h2>
+        <p class="processing-notice processing-notice--local">
+          <strong>Cihazınızda işlenir</strong>
+          Bu editörde seçtiğiniz PDF'ler sunucuya gönderilmez.
+        </p>
+        <label class="dropzone" for="fileInput" id="dropzone">
+          <strong>Bir veya daha fazla PDF'i buraya sürükleyin</strong>
+          <span>Dosyalar seçtiğiniz sırayla birleştirilir</span>
+        </label>
+        <input id="fileInput" type="file" accept="application/pdf" multiple hidden />
+
+        <div class="button-row">
+          <button id="mergeTrigger" class="secondary">Belgeye başka PDF ekle</button>
+          <input id="mergeInput" type="file" accept="application/pdf" hidden />
+        </div>
+        <div class="button-row">
+          <button id="downloadBtn" disabled>PDF indir</button>
+          <button id="compressBtn" disabled class="secondary">Kayıpsız Optimize Et</button>
+          <button id="aggressiveBtn" disabled class="secondary">Güçlü Sıkıştır</button>
+        </div>
+
+        <p id="status" class="status">Henüz dosya yüklenmedi.</p>
+      </section>
+
+      <section class="panel editor-panel">
+        <div class="toolbar">
+          <button id="rotateBtn" disabled>90° döndür</button>
+          <button id="addPageBtn" disabled>Boş sayfa ekle</button>
+          <button id="deletePageBtn" disabled>Sayfayı sil</button>
+          <button id="finishEditBtn" class="finish-edit-btn" disabled>Düzenlemeyi tamamla</button>
+        </div>
+
+        <div class="workspace">
+          <aside class="thumbs" id="thumbs"></aside>
+        </div>
+      </section>
+      </div>
+
+      <div class="completion-toast" id="completionToast" hidden role="status" aria-live="polite">
+        <span class="completion-check">✓</span>
+        <div class="completion-content">
+          <strong>PDF düzenleme tamamlandı</strong>
+          <p>Belgeniz hazır. Yapmak istediğiniz işlemi seçin.</p>
+          <label class="completion-name">
+            Dosya adı
+            <span>
+              <input id="completedFilename" value="belgelab-tamamlandi" maxlength="80">
+              <em>.pdf</em>
+            </span>
+          </label>
+          <div class="completion-actions">
+            <button id="downloadCompletedPdf" type="button">PDF'i indir</button>
+            <button id="previewCompletedPdf" class="secondary" type="button">Önizle</button>
+            <button id="continueEditing" class="secondary" type="button">Düzenlemeye devam et</button>
+            <button id="startNewDocument" class="secondary danger-action" type="button">Yeni belge oluştur</button>
+          </div>
+        </div>
+        <button id="closeCompletionToast" type="button" aria-label="Bildirimi kapat">×</button>
+      </div>
+
+    <section class="panel converter-panel" id="converter">
+      <div class="converter-header">
+        <h2>Belge dönüştürücü</h2>
+        <p>PDF, DOCX, XLSX, PPTX ve DWG dosyalarınızı tek tıkla dönüştürün.</p>
+      </div>
+      <p class="processing-notice processing-notice--server">
+        <strong>Sunucuda işlenir</strong>
+        Dönüştürme için seçtiğiniz dosya uygulama sunucusuna gönderilir; işlem bitince geçici çalışma alanı silinir.
+      </p>
+
+      <div class="progress-card" id="progressCard" hidden>
+        <div class="progress-header">
+          <strong>İlerleme</strong>
+          <span id="progressText">Hazır</span>
+        </div>
+        <div class="progress-bar" aria-label="Dönüştürme ilerleme çubuğu">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <p id="progressHint" class="progress-hint" hidden>
+          DWG dönüşümü, çizimin boyutu ve karmaşıklığına göre biraz zaman alabilir.
+        </p>
+      </div>
+
+      <div class="converter-controls">
+        <label class="conversion-type-field">
+          <span>Dönüşüm türü</span>
+          <select id="conversionType">
+            <option value="pdf-to-docx">PDF → DOCX</option>
+            <option value="pdf-to-xlsx">PDF → XLSX</option>
+            <option value="pdf-to-pptx">PDF → PPTX</option>
+            <option value="docx-to-pdf">DOCX → PDF</option>
+            <option value="xlsx-to-pdf">XLSX → PDF</option>
+            <option value="pptx-to-pdf">PPTX → PDF</option>
+            <option value="dwg-to-pdf">DWG → PDF</option>
+          </select>
+        </label>
+        <label class="conversion-mode" id="pdfWordModeWrap">
+          Word aktarım biçimi
+          <select id="pdfWordMode">
+            <option value="editable">Düzenlenebilir OCR</option>
+            <option value="layout">Görünümü birebir koru</option>
+            <option value="hybrid">Hibrit: görünüm + düzenlenebilir metin</option>
+          </select>
+        </label>
+
+        <label class="converter-dropzone" id="conversionDropzone" for="conversionInput">
+          <strong id="conversionFileName">Dönüştürülecek dosyayı seçin</strong>
+          <span id="conversionFileHint">PDF, DOCX, XLSX, PPTX veya DWG</span>
+        </label>
+        <input
+          id="conversionInput"
+          type="file"
+          accept=".pdf,.docx,.xlsx,.pptx,.dwg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/acad,application/x-acad,application/autocad_dwg"
+          hidden
+        />
+
+        <button id="convertBtn" class="secondary">Dönüştür</button>
+      </div>
+
+      <p id="conversionStatus" class="status">Henüz dönüştürme yapılmadı.</p>
+    </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="footer-brand" href="/">BelgeLab</a>
+      <p>Belge araçları için bağımsız bir web uygulaması.</p>
+      <nav aria-label="Yasal bağlantılar">
+        <a href="/hakkimizda.html">Hakkımızda</a>
+        <a href="/rehberler.html">Rehberler</a>
+        <a href="/iletisim.html">İletişim</a>
+        <a href="/kvkk.html">KVKK Aydınlatma</a>
+        <a href="/cookies.html">Çerez Politikası</a>
+        <a href="/privacy.html">Gizlilik Politikası</a>
+        <a href="/terms.html">Kullanım Koşulları</a>
+        <a href="/licenses.html">Açık Kaynak Lisansları</a>
+        <a href="#" data-open-consent>Çerez tercihleri</a>
+      </nav>
+      <aside class="ad-slot footer-ad" data-ad-position="footer" aria-label="Reklam" hidden><span>Reklam</span></aside>
+      <small>© <span id="copyrightYear">2026</span> BelgeLab. Tüm hakları saklıdır.</small>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="app.js"></script>
+    <script src="tools.js"></script>
+    <script src="creators.js"></script>
+    <script src="/consent.js"></script>
+    <script src="/ads.js"></script>
+  </body>
+</html>

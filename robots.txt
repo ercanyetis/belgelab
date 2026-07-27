@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /health
+
+User-agent: Googlebot-Image
+Allow: /favicon.ico
+Allow: /favicon-48.png
+Allow: /icon-192.png
+Allow: /icon-512.png
+
+User-agent: Yandex
+Allow: /
+Disallow: /api/
+Disallow: /health
+
+Sitemap: https://belgelab.com.tr/sitemap.xml

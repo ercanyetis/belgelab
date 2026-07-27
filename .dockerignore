@@ -1,0 +1,13 @@
+.git
+.agents
+.codex
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.log
+browser_preflight.py
+mobile_preflight.py
+preflight_test.py
+favicon-preview.png
+belgelab-favicon-preview.png

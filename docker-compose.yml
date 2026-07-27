@@ -1,0 +1,24 @@
+services:
+  belgelab:
+    build: .
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      TMPDIR: /tmp/belgelab
+      DWG_TO_PDF_COMMAND: ${DWG_TO_PDF_COMMAND:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    tmpfs:
+      - /tmp/belgelab:rw,noexec,nosuid,nodev,size=256m,uid=10001,gid=10001,mode=0700
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 3g
+    cpus: 1.8
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

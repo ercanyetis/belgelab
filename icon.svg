@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title">
+  <title id="title">BelgeLab</title>
+  <defs>
+    <linearGradient id="bg" x1="25" y1="18" x2="166" y2="178" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8067F2"/>
+      <stop offset=".52" stop-color="#6045D5"/>
+      <stop offset="1" stop-color="#36266F"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="126" y1="42" x2="162" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE07A"/>
+      <stop offset="1" stop-color="#FFB62E"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="48" fill="url(#bg)"/>
+  <path d="M50 37h64l29 29v87c0 5-4 9-9 9H50c-5 0-9-4-9-9V46c0-5 4-9 9-9z" fill="#fff"/>
+  <path d="M114 37v25c0 5 4 9 9 9h20z" fill="#DDD6FF"/>
+  <path d="M67 76h30c19 0 30 8 30 22 0 8-4 14-12 18 10 3 16 10 16 21 0 16-13 25-35 25H67zm28 32c8 0 12-3 12-9s-4-9-12-9h-7v18zm2 38c9 0 14-4 14-11s-5-11-14-11h-9v22z" fill="#6549DB"/>
+  <circle cx="148" cy="49" r="18" fill="url(#accent)"/>
+  <path d="M148 38v22M137 49h22" stroke="#30245E" stroke-width="6" stroke-linecap="round"/>
+</svg>
