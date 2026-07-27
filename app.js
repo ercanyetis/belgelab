@@ -28,10 +28,8 @@ const conversionFileHint = document.getElementById("conversionFileHint");
 const pdfWordModeWrap = document.getElementById("pdfWordModeWrap");
 const pdfWordMode = document.getElementById("pdfWordMode");
 const installBtn = document.getElementById("installBtn");
-const progressCard = document.getElementById("progressCard");
-const progressText = document.getElementById("progressText");
-const progressFill = document.getElementById("progressFill");
-const progressHint = document.getElementById("progressHint");
+const loadingOverlay = document.getElementById("loadingOverlay");
+const loadingStage = document.getElementById("loadingStage");
 const categoryButtons = document.querySelectorAll(".category-pill");
 const toolCards = document.querySelectorAll(".tool-card");
 const serverPdfTools = new Set(["unlock", "protect", "repair", "compare"]);
@@ -52,7 +50,7 @@ let pdfDoc = null;
 let currentPageIndex = 0;
 let lastBytes = null;
 let selectedConversionFile = null;
-let progressTimer = null;
+let isConversionRunning = false;
 let deferredPrompt = null;
 let thumbnailRenderVersion = 0;
 let completedPdfBlob = null;
@@ -582,35 +580,22 @@ function registerServiceWorker() {
   }
 }
 
-function setConversionProgress(message, percentage) {
-  progressText.textContent = message;
-  progressFill.style.width = `${Math.max(0, Math.min(100, percentage))}%`;
-  progressCard.hidden = false;
-}
-
-function clearConversionProgress() {
-  if (progressTimer) {
-    window.clearInterval(progressTimer);
-    progressTimer = null;
+function setConversionBusy(busy, stage = "İşlem başlatılıyor...") {
+  isConversionRunning = busy;
+  conversionType.disabled = busy;
+  conversionInput.disabled = busy;
+  pdfWordMode.disabled = busy;
+  convertBtn.disabled = busy || !selectedConversionFile;
+  conversionDropzone.classList.toggle("is-locked", busy);
+  conversionDropzone.setAttribute("aria-disabled", String(busy));
+  if (busy) {
+    loadingStage.textContent = stage;
+    loadingOverlay.hidden = false;
+    document.body.classList.add("is-processing");
+  } else {
+    loadingOverlay.hidden = true;
+    document.body.classList.remove("is-processing");
   }
-  progressCard.hidden = true;
-}
-
-function startConversionProgress(operation) {
-  clearConversionProgress();
-  let percentage = 10;
-  progressHint.hidden = operation !== "dwg-to-pdf";
-  setConversionProgress("İşlem başlatıldı", percentage);
-  progressTimer = window.setInterval(() => {
-    if (percentage < 55) {
-      percentage += 5;
-    } else if (percentage < 78) {
-      percentage += 2;
-    } else if (percentage < 99) {
-      percentage += 1;
-    }
-    setConversionProgress(`İşleniyor... ${percentage}%`, percentage);
-  }, 700);
 }
 
 function downloadBlob(blob, filename) {
@@ -712,6 +697,7 @@ installBtn.addEventListener("click", async () => {
 });
 
 convertBtn.addEventListener("click", async () => {
+  if (isConversionRunning) return;
   if (!selectedConversionFile) {
     setConversionStatus("Önce bir dosya seçin.");
     return;
@@ -720,25 +706,26 @@ convertBtn.addEventListener("click", async () => {
   const operation = conversionType.value;
   const fileName = selectedConversionFile.name;
   setConversionStatus(`${fileName} dönüştürülüyor...`);
-  startConversionProgress(operation);
+  setConversionBusy(
+    true,
+    operation === "dwg-to-pdf"
+      ? "Çizim sunucuya yükleniyor; DWG dönüşümü biraz sürebilir..."
+      : "Belge sunucuya yükleniyor..."
+  );
 
   try {
+    loadingStage.textContent = "Belge işleniyor ve çıktı hazırlanıyor...";
     await callConversionApi(selectedConversionFile, operation);
-    clearConversionProgress();
-    setConversionProgress("Tamamlandı", 100);
     setConversionStatus("Dönüştürme tamamlandı.");
     selectedConversionFile = null;
     conversionInput.value = "";
     convertBtn.disabled = true;
     resetConversionFileDisplay();
-    window.setTimeout(() => {
-      clearConversionProgress();
-    }, 1200);
   } catch (error) {
-    clearConversionProgress();
-    setConversionProgress("İşlem başarısız oldu", 0);
     console.error(error);
     setConversionStatus(`Dönüştürme hatası: ${error.message}`);
+  } finally {
+    setConversionBusy(false);
   }
 });
 

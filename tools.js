@@ -12,6 +12,8 @@
   const closeButton = document.getElementById("closeQuickTool");
   const toolStatus = document.getElementById("quickToolStatus");
   const processingNotice = document.getElementById("quickProcessingNotice");
+  const loadingOverlay = document.getElementById("loadingOverlay");
+  const loadingStage = document.getElementById("loadingStage");
   const cropWorkspace = document.getElementById("cropWorkspace");
   const cropStage = document.getElementById("cropStage");
   const cropCanvas = document.getElementById("cropCanvas");
@@ -28,6 +30,7 @@
   let cropDragStart = null;
   let cropDragMode = "draw";
   let cropStartArea = null;
+  let isQuickToolRunning = false;
 
   const toolConfig = {
     compress: {
@@ -62,6 +65,26 @@
   function setStatus(message, error = false) {
     toolStatus.textContent = message;
     toolStatus.classList.toggle("error", error);
+    if (isQuickToolRunning && !error) loadingStage.textContent = message;
+  }
+
+  function setQuickToolBusy(busy, stage = "İşlem hazırlanıyor...") {
+    isQuickToolRunning = busy;
+    runButton.disabled = busy;
+    closeButton.disabled = busy;
+    filesInput.disabled = busy;
+    secondInput.disabled = busy;
+    options.querySelectorAll("input, select, button").forEach((control) => {
+      control.disabled = busy;
+    });
+    if (busy) {
+      loadingStage.textContent = stage;
+      loadingOverlay.hidden = false;
+      document.body.classList.add("is-processing");
+    } else {
+      loadingOverlay.hidden = true;
+      document.body.classList.remove("is-processing");
+    }
   }
 
   function optionValues() {
@@ -427,12 +450,13 @@
   }
 
   runButton.addEventListener("click", async () => {
+    if (isQuickToolRunning) return;
     const config = toolConfig[activeTool];
     const files = [...filesInput.files];
     if (!config || !files.length) return setStatus("Önce uygun bir dosya seçin.", true);
     if (config.second && !secondInput.files[0]) return setStatus("İkinci PDF dosyasını da seçin.", true);
     if (activeTool === "crop" && !cropArea) return setStatus("Önizleme üzerinde kırpılacak alanı seçin.", true);
-    runButton.disabled = true;
+    setQuickToolBusy(true);
     setStatus("İşlem hazırlanıyor...");
     try {
       const values = optionValues();
@@ -448,7 +472,7 @@
       console.error(error);
       setStatus(`İşlem tamamlanamadı: ${error.message}`, true);
     } finally {
-      runButton.disabled = false;
+      setQuickToolBusy(false);
     }
   });
 })();

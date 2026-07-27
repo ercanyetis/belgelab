@@ -382,19 +382,6 @@
         Dönüştürme için seçtiğiniz dosya uygulama sunucusuna gönderilir; işlem bitince geçici çalışma alanı silinir.
       </p>
 
-      <div class="progress-card" id="progressCard" hidden>
-        <div class="progress-header">
-          <strong>İlerleme</strong>
-          <span id="progressText">Hazır</span>
-        </div>
-        <div class="progress-bar" aria-label="Dönüştürme ilerleme çubuğu">
-          <div id="progressFill" class="progress-fill"></div>
-        </div>
-        <p id="progressHint" class="progress-hint" hidden>
-          DWG dönüşümü, çizimin boyutu ve karmaşıklığına göre biraz zaman alabilir.
-        </p>
-      </div>
-
       <div class="converter-controls">
         <label class="conversion-type-field">
           <span>Dönüşüm türü</span>
@@ -434,6 +421,15 @@
       <p id="conversionStatus" class="status">Henüz dönüştürme yapılmadı.</p>
     </section>
     </main>
+
+    <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite" aria-busy="true" hidden>
+      <div class="loading-dialog">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <strong>Belgeniz hazırlanıyor</strong>
+        <p id="loadingStage">İşlem başlatılıyor...</p>
+        <small>Lütfen bu pencereyi kapatmayın.</small>
+      </div>
+    </div>
 
     <footer class="site-footer">
       <a class="footer-brand" href="/">BelgeLab</a>
