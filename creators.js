@@ -6,25 +6,69 @@
   const extension = document.getElementById("creatorExtension");
   const status = document.getElementById("creatorStatus");
   const saveButton = document.getElementById("saveCreatedDocument");
+  const loadingOverlay = document.getElementById("loadingOverlay");
+  const loadingStage = document.getElementById("loadingStage");
   const workspaces = {
     word: document.getElementById("wordCreator"),
     excel: document.getElementById("excelCreator"),
     powerpoint: document.getElementById("powerpointCreator"),
   };
   const config = {
-    word: { title: "Word belgesi oluştur", extension: ".docx", description: "Metninizi biçimlendirin ve DOCX olarak kaydedin." },
-    excel: { title: "Excel çalışma kitabı oluştur", extension: ".xlsx", description: "Hücre verilerini ve temel formülleri XLSX olarak kaydedin." },
-    powerpoint: { title: "PowerPoint sunumu oluştur", extension: ".pptx", description: "Slaytlarınızı hazırlayın ve PPTX olarak kaydedin." },
+    word: { title: "Word belgesi oluştur", extension: ".docx", description: "Metninizi biçimlendirin ve DOCX olarak kaydedin.", loadingStage: "Word belgesi sunucuda hazırlanıyor..." },
+    excel: { title: "Excel çalışma kitabı oluştur", extension: ".xlsx", description: "Hücre verilerini ve temel formülleri XLSX olarak kaydedin.", loadingStage: "Excel çalışma kitabı sunucuda hazırlanıyor..." },
+    powerpoint: { title: "PowerPoint sunumu oluştur", extension: ".pptx", description: "Slaytlarınızı hazırlayın ve PPTX olarak kaydedin.", loadingStage: "Sunum sunucuda hazırlanıyor..." },
   };
   let activeType = "word";
   let excelRows = 10;
   let excelColumns = 6;
   let slides = [{ title: "Sunum başlığı", body: "Alt başlık veya açıklama" }];
   let activeSlide = 0;
+  let isSaving = false;
 
   function setStatus(message, error = false) {
     status.textContent = message;
     status.classList.toggle("error", error);
+  }
+
+  function waitForNextPaint() {
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    });
+  }
+
+  function setCreatorBusy(busy, stage = "") {
+    const controls = [
+      ...panel.querySelectorAll("button, input, textarea, [contenteditable]"),
+      ...document.querySelectorAll("[data-create-tool]"),
+    ];
+    controls.forEach((control) => {
+      if (busy) {
+        control.dataset.creatorPreviousDisabled = String(control.disabled);
+        control.dataset.creatorPreviousContenteditable = control.getAttribute("contenteditable") ?? "";
+        if ("disabled" in control) control.disabled = true;
+        if (control.hasAttribute("contenteditable")) control.setAttribute("contenteditable", "false");
+      } else {
+        if ("disabled" in control) control.disabled = control.dataset.creatorPreviousDisabled === "true";
+        if (control.hasAttribute("contenteditable")) {
+          const previous = control.dataset.creatorPreviousContenteditable;
+          if (previous) control.setAttribute("contenteditable", previous);
+          else control.removeAttribute("contenteditable");
+        }
+        delete control.dataset.creatorPreviousDisabled;
+        delete control.dataset.creatorPreviousContenteditable;
+      }
+    });
+
+    if (busy) {
+      panel.setAttribute("aria-busy", "true");
+      loadingStage.textContent = stage;
+      loadingOverlay.hidden = false;
+      document.body.classList.add("is-processing");
+    } else {
+      panel.removeAttribute("aria-busy");
+      loadingOverlay.hidden = true;
+      document.body.classList.remove("is-processing");
+    }
   }
 
   document.querySelectorAll("[data-create-tool]").forEach((card) => {
@@ -162,36 +206,71 @@
   }
 
   async function saveDocument() {
-    if (activeType === "powerpoint") syncCurrentSlide();
-    const payload = {
-      type: activeType,
-      filename: safeFilename(),
-      content: activeType === "word" ? wordData() : activeType === "excel" ? excelData() : slides,
-    };
-    saveButton.disabled = true;
-    setStatus("Belge hazırlanıyor...");
+    if (isSaving) return;
+    const startedAt = performance.now();
+    let paintCompletedAt = null;
+    let payloadPreparedAt = null;
+    let fetchStartedAt = null;
+    let headersReceivedAt = null;
+    let blobPreparedAt = null;
+    let downloadStartedAt = null;
+    let downloadTriggeredAt = null;
+    let responseSizeBytes = null;
+    isSaving = true;
+    const savingType = activeType;
+    setCreatorBusy(true, config[savingType].loadingStage);
+    setStatus(config[savingType].loadingStage);
     try {
+      await waitForNextPaint();
+      paintCompletedAt = performance.now();
+      if (savingType === "powerpoint") syncCurrentSlide();
+      const payload = {
+        type: savingType,
+        filename: safeFilename(),
+        content: savingType === "word" ? wordData() : savingType === "excel" ? excelData() : slides,
+      };
+      payloadPreparedAt = performance.now();
+      fetchStartedAt = performance.now();
       const response = await fetch("/api/create-document", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      headersReceivedAt = performance.now();
       if (!response.ok) {
         const error = await response.json().catch(() => null);
         throw new Error(error?.error || "Belge oluşturulamadı.");
       }
+      loadingStage.textContent = "Dosya telefona aktarılıyor...";
       const blob = await response.blob();
+      blobPreparedAt = performance.now();
+      responseSizeBytes = blob.size;
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = safeFilename();
+      downloadStartedAt = performance.now();
       link.click();
+      downloadTriggeredAt = performance.now();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       setStatus(`${safeFilename()} cihazınıza indirildi.`);
     } catch (error) {
+      console.error(error);
       setStatus(error.message, true);
     } finally {
-      saveButton.disabled = false;
+      const totalCompletedAt = performance.now();
+      console.log({
+        documentType: savingType,
+        renderWaitMs: paintCompletedAt === null ? null : paintCompletedAt - startedAt,
+        payloadPreparationMs: paintCompletedAt === null || payloadPreparedAt === null ? null : payloadPreparedAt - paintCompletedAt,
+        serverAndNetworkMs: fetchStartedAt === null || headersReceivedAt === null ? null : headersReceivedAt - fetchStartedAt,
+        blobPreparationMs: headersReceivedAt === null || blobPreparedAt === null ? null : blobPreparedAt - headersReceivedAt,
+        downloadTriggerMs: downloadStartedAt === null || downloadTriggeredAt === null ? null : downloadTriggeredAt - downloadStartedAt,
+        totalMs: totalCompletedAt - startedAt,
+        responseSizeBytes,
+      });
+      setCreatorBusy(false);
+      isSaving = false;
     }
   }
 
