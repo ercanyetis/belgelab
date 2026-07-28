@@ -207,68 +207,40 @@
 
   async function saveDocument() {
     if (isSaving) return;
-    const startedAt = performance.now();
-    let paintCompletedAt = null;
-    let payloadPreparedAt = null;
-    let fetchStartedAt = null;
-    let headersReceivedAt = null;
-    let blobPreparedAt = null;
-    let downloadStartedAt = null;
-    let downloadTriggeredAt = null;
-    let responseSizeBytes = null;
     isSaving = true;
     const savingType = activeType;
     setCreatorBusy(true, config[savingType].loadingStage);
     setStatus(config[savingType].loadingStage);
     try {
       await waitForNextPaint();
-      paintCompletedAt = performance.now();
       if (savingType === "powerpoint") syncCurrentSlide();
       const payload = {
         type: savingType,
         filename: safeFilename(),
         content: savingType === "word" ? wordData() : savingType === "excel" ? excelData() : slides,
       };
-      payloadPreparedAt = performance.now();
-      fetchStartedAt = performance.now();
       const response = await fetch("/api/create-document", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      headersReceivedAt = performance.now();
       if (!response.ok) {
         const error = await response.json().catch(() => null);
         throw new Error(error?.error || "Belge oluşturulamadı.");
       }
       loadingStage.textContent = "Dosya telefona aktarılıyor...";
       const blob = await response.blob();
-      blobPreparedAt = performance.now();
-      responseSizeBytes = blob.size;
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = safeFilename();
-      downloadStartedAt = performance.now();
       link.click();
-      downloadTriggeredAt = performance.now();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       setStatus(`${safeFilename()} cihazınıza indirildi.`);
     } catch (error) {
       console.error(error);
       setStatus(error.message, true);
     } finally {
-      const totalCompletedAt = performance.now();
-      console.log({
-        documentType: savingType,
-        renderWaitMs: paintCompletedAt === null ? null : paintCompletedAt - startedAt,
-        payloadPreparationMs: paintCompletedAt === null || payloadPreparedAt === null ? null : payloadPreparedAt - paintCompletedAt,
-        serverAndNetworkMs: fetchStartedAt === null || headersReceivedAt === null ? null : headersReceivedAt - fetchStartedAt,
-        blobPreparationMs: headersReceivedAt === null || blobPreparedAt === null ? null : blobPreparedAt - headersReceivedAt,
-        downloadTriggerMs: downloadStartedAt === null || downloadTriggeredAt === null ? null : downloadTriggeredAt - downloadStartedAt,
-        totalMs: totalCompletedAt - startedAt,
-        responseSizeBytes,
-      });
       setCreatorBusy(false);
       isSaving = false;
     }

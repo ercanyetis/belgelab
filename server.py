@@ -41,6 +41,10 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 logging.basicConfig(level=logging.INFO)
+PERFORMANCE_LOGGING_ENABLED = (
+    os.getenv("BELGELAB_PERFORMANCE_LOGGING", "").strip().lower()
+    in {"1", "true", "yes", "on"}
+)
 
 app = Flask(__name__, static_folder=".", static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
@@ -1222,7 +1226,7 @@ def pdf_tool():
 @app.post("/api/create-document")
 @limiter.limit("20 per minute")
 def create_document():
-    endpoint_started_at = time.perf_counter()
+    endpoint_started_at = time.perf_counter() if PERFORMANCE_LOGGING_ENABLED else 0.0
     validation_ms = 0.0
     generation_ms = 0.0
     buffer_ms = 0.0
@@ -1231,28 +1235,31 @@ def create_document():
     document_type = None
     success = False
     try:
-        validation_started_at = time.perf_counter()
+        validation_started_at = time.perf_counter() if PERFORMANCE_LOGGING_ENABLED else 0.0
         payload = request.get_json(silent=True) or {}
         document_type = payload.get("type")
         content = payload.get("content")
         requested_name = str(payload.get("filename") or "yeni-belge")
         extensions = {"word": ".docx", "excel": ".xlsx", "powerpoint": ".pptx"}
         extension = extensions.get(document_type)
-        validation_ms = (time.perf_counter() - validation_started_at) * 1000
+        if PERFORMANCE_LOGGING_ENABLED:
+            validation_ms = (time.perf_counter() - validation_started_at) * 1000
         if not extension or not isinstance(content, list):
-            response_started_at = time.perf_counter()
+            response_started_at = time.perf_counter() if PERFORMANCE_LOGGING_ENABLED else 0.0
             response = (jsonify({"error": "Geçersiz belge oluşturma isteği."}), 400)
-            response_ms = (time.perf_counter() - response_started_at) * 1000
+            if PERFORMANCE_LOGGING_ENABLED:
+                response_ms = (time.perf_counter() - response_started_at) * 1000
             return response
 
-        validation_started_at = time.perf_counter()
+        validation_started_at = time.perf_counter() if PERFORMANCE_LOGGING_ENABLED else 0.0
         base_name = Path(requested_name).stem.strip()
         safe_base = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "-", base_name)[:80] or "yeni-belge"
         output_name = f"{safe_base}{extension}"
         output = io.BytesIO()
-        validation_ms += (time.perf_counter() - validation_started_at) * 1000
+        if PERFORMANCE_LOGGING_ENABLED:
+            validation_ms += (time.perf_counter() - validation_started_at) * 1000
 
-        generation_started_at = time.perf_counter()
+        generation_started_at = time.perf_counter() if PERFORMANCE_LOGGING_ENABLED else 0.0
         buffer_started_at = None
         try:
             if document_type == "word":
@@ -1299,49 +1306,55 @@ def create_document():
                         paragraph.text = line
                 output_document = presentation
                 mimetype = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-            generation_ms = (time.perf_counter() - generation_started_at) * 1000
-
-            buffer_started_at = time.perf_counter()
-            output_document.save(output)
-            output_bytes = output.tell()
-            output.seek(0)
-            buffer_ms = (time.perf_counter() - buffer_started_at) * 1000
-        except Exception as exc:
-            if generation_ms == 0.0:
+            if PERFORMANCE_LOGGING_ENABLED:
                 generation_ms = (time.perf_counter() - generation_started_at) * 1000
-            if buffer_started_at is not None:
+
+            buffer_started_at = time.perf_counter() if PERFORMANCE_LOGGING_ENABLED else None
+            output_document.save(output)
+            if PERFORMANCE_LOGGING_ENABLED:
+                output_bytes = output.tell()
+            output.seek(0)
+            if PERFORMANCE_LOGGING_ENABLED:
+                buffer_ms = (time.perf_counter() - buffer_started_at) * 1000
+        except Exception as exc:
+            if PERFORMANCE_LOGGING_ENABLED and generation_ms == 0.0:
+                generation_ms = (time.perf_counter() - generation_started_at) * 1000
+            if PERFORMANCE_LOGGING_ENABLED and buffer_started_at is not None:
                 buffer_ms = (time.perf_counter() - buffer_started_at) * 1000
             logging.exception("Document creation failed")
-            response_started_at = time.perf_counter()
+            response_started_at = time.perf_counter() if PERFORMANCE_LOGGING_ENABLED else 0.0
             response = (jsonify({"error": f"Belge oluşturulamadı: {exc}"}), 500)
-            response_ms = (time.perf_counter() - response_started_at) * 1000
+            if PERFORMANCE_LOGGING_ENABLED:
+                response_ms = (time.perf_counter() - response_started_at) * 1000
             return response
 
-        response_started_at = time.perf_counter()
+        response_started_at = time.perf_counter() if PERFORMANCE_LOGGING_ENABLED else 0.0
         response = send_file(
             output,
             as_attachment=True,
             download_name=output_name,
             mimetype=mimetype,
         )
-        response_ms = (time.perf_counter() - response_started_at) * 1000
+        if PERFORMANCE_LOGGING_ENABLED:
+            response_ms = (time.perf_counter() - response_started_at) * 1000
         success = True
         return response
     finally:
-        total_ms = (time.perf_counter() - endpoint_started_at) * 1000
-        safe_document_type = document_type if isinstance(document_type, str) and document_type in {"word", "excel", "powerpoint"} else "invalid"
-        logging.info(
-            "document_performance type=%s success=%s validation_ms=%.3f generation_ms=%.3f "
-            "buffer_ms=%.3f response_ms=%.3f total_ms=%.3f output_bytes=%d",
-            safe_document_type,
-            str(success).lower(),
-            validation_ms,
-            generation_ms,
-            buffer_ms,
-            response_ms,
-            total_ms,
-            output_bytes,
-        )
+        if PERFORMANCE_LOGGING_ENABLED:
+            total_ms = (time.perf_counter() - endpoint_started_at) * 1000
+            safe_document_type = document_type if isinstance(document_type, str) and document_type in {"word", "excel", "powerpoint"} else "invalid"
+            logging.info(
+                "document_performance type=%s success=%s validation_ms=%.3f generation_ms=%.3f "
+                "buffer_ms=%.3f response_ms=%.3f total_ms=%.3f output_bytes=%d",
+                safe_document_type,
+                str(success).lower(),
+                validation_ms,
+                generation_ms,
+                buffer_ms,
+                response_ms,
+                total_ms,
+                output_bytes,
+            )
 
 
 def extract_text_from_reader(reader: PdfReader) -> str:
