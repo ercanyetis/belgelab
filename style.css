@@ -47,6 +47,8 @@ button, a, label, select { -webkit-tap-highlight-color: transparent; }
   gap: 14px;
   min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
   padding: 3px;
   scrollbar-width: none;
 }
@@ -69,7 +71,7 @@ button, a, label, select { -webkit-tap-highlight-color: transparent; }
   border-color: #292930;
 }
 
-.install-btn { white-space: nowrap; }
+.install-btn { flex: 0 0 auto; white-space: nowrap; }
 
 .hero {
   padding: 54px 24px 35px;
