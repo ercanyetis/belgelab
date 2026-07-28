@@ -9,6 +9,7 @@ import tempfile
 import ast
 import operator
 import subprocess
+import time
 import zipfile
 from html import escape
 from copy import deepcopy
@@ -1221,75 +1222,126 @@ def pdf_tool():
 @app.post("/api/create-document")
 @limiter.limit("20 per minute")
 def create_document():
-    payload = request.get_json(silent=True) or {}
-    document_type = payload.get("type")
-    content = payload.get("content")
-    requested_name = str(payload.get("filename") or "yeni-belge")
-    extensions = {"word": ".docx", "excel": ".xlsx", "powerpoint": ".pptx"}
-    extension = extensions.get(document_type)
-    if not extension or not isinstance(content, list):
-        return jsonify({"error": "Geçersiz belge oluşturma isteği."}), 400
-    base_name = Path(requested_name).stem.strip()
-    safe_base = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "-", base_name)[:80] or "yeni-belge"
-    output_name = f"{safe_base}{extension}"
-    output = io.BytesIO()
-
+    endpoint_started_at = time.perf_counter()
+    validation_ms = 0.0
+    generation_ms = 0.0
+    buffer_ms = 0.0
+    response_ms = 0.0
+    output_bytes = 0
+    document_type = None
+    success = False
     try:
-        if document_type == "word":
-            document = Document()
-            for item in content[:1000]:
-                text = clean_document_text(str(item.get("text", "")))[:20000]
-                if not text:
-                    continue
-                if item.get("type") == "heading":
-                    document.add_heading(text, level=1)
-                else:
-                    document.add_paragraph(text)
-            document.save(output)
-            mimetype = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        elif document_type == "excel":
-            workbook = Workbook()
-            sheet = workbook.active
-            sheet.title = "Sayfa1"
-            for row in content[:2000]:
-                values = []
-                for value in list(row)[:100]:
-                    cleaned = clean_document_text(str(value))[:32767]
-                    if cleaned.startswith("="):
-                        values.append(cleaned)
-                    else:
-                        values.append(parse_turkish_number(cleaned))
-                sheet.append(values)
-            sheet.freeze_panes = "A2"
-            for column in range(1, min(sheet.max_column, 100) + 1):
-                values = [str(sheet.cell(row, column).value or "") for row in range(1, min(sheet.max_row, 100) + 1)]
-                sheet.column_dimensions[get_column_letter(column)].width = min(40, max(10, max(map(len, values), default=8) + 2))
-            workbook.save(output)
-            mimetype = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        else:
-            presentation = Presentation()
-            for slide_data in content[:200]:
-                slide = presentation.slides.add_slide(presentation.slide_layouts[1])
-                slide.shapes.title.text = clean_document_text(str(slide_data.get("title", "")))[:500]
-                body = clean_document_text(str(slide_data.get("body", "")))[:10000]
-                frame = slide.placeholders[1].text_frame
-                frame.clear()
-                for index, line in enumerate(body.splitlines() or [""]):
-                    paragraph = frame.paragraphs[0] if index == 0 else frame.add_paragraph()
-                    paragraph.text = line
-            presentation.save(output)
-            mimetype = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-    except Exception as exc:
-        logging.exception("Document creation failed")
-        return jsonify({"error": f"Belge oluşturulamadı: {exc}"}), 500
+        validation_started_at = time.perf_counter()
+        payload = request.get_json(silent=True) or {}
+        document_type = payload.get("type")
+        content = payload.get("content")
+        requested_name = str(payload.get("filename") or "yeni-belge")
+        extensions = {"word": ".docx", "excel": ".xlsx", "powerpoint": ".pptx"}
+        extension = extensions.get(document_type)
+        validation_ms = (time.perf_counter() - validation_started_at) * 1000
+        if not extension or not isinstance(content, list):
+            response_started_at = time.perf_counter()
+            response = (jsonify({"error": "Geçersiz belge oluşturma isteği."}), 400)
+            response_ms = (time.perf_counter() - response_started_at) * 1000
+            return response
 
-    output.seek(0)
-    return send_file(
-        output,
-        as_attachment=True,
-        download_name=output_name,
-        mimetype=mimetype,
-    )
+        validation_started_at = time.perf_counter()
+        base_name = Path(requested_name).stem.strip()
+        safe_base = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "-", base_name)[:80] or "yeni-belge"
+        output_name = f"{safe_base}{extension}"
+        output = io.BytesIO()
+        validation_ms += (time.perf_counter() - validation_started_at) * 1000
+
+        generation_started_at = time.perf_counter()
+        buffer_started_at = None
+        try:
+            if document_type == "word":
+                document = Document()
+                for item in content[:1000]:
+                    text = clean_document_text(str(item.get("text", "")))[:20000]
+                    if not text:
+                        continue
+                    if item.get("type") == "heading":
+                        document.add_heading(text, level=1)
+                    else:
+                        document.add_paragraph(text)
+                output_document = document
+                mimetype = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            elif document_type == "excel":
+                workbook = Workbook()
+                sheet = workbook.active
+                sheet.title = "Sayfa1"
+                for row in content[:2000]:
+                    values = []
+                    for value in list(row)[:100]:
+                        cleaned = clean_document_text(str(value))[:32767]
+                        if cleaned.startswith("="):
+                            values.append(cleaned)
+                        else:
+                            values.append(parse_turkish_number(cleaned))
+                    sheet.append(values)
+                sheet.freeze_panes = "A2"
+                for column in range(1, min(sheet.max_column, 100) + 1):
+                    values = [str(sheet.cell(row, column).value or "") for row in range(1, min(sheet.max_row, 100) + 1)]
+                    sheet.column_dimensions[get_column_letter(column)].width = min(40, max(10, max(map(len, values), default=8) + 2))
+                output_document = workbook
+                mimetype = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            else:
+                presentation = Presentation()
+                for slide_data in content[:200]:
+                    slide = presentation.slides.add_slide(presentation.slide_layouts[1])
+                    slide.shapes.title.text = clean_document_text(str(slide_data.get("title", "")))[:500]
+                    body = clean_document_text(str(slide_data.get("body", "")))[:10000]
+                    frame = slide.placeholders[1].text_frame
+                    frame.clear()
+                    for index, line in enumerate(body.splitlines() or [""]):
+                        paragraph = frame.paragraphs[0] if index == 0 else frame.add_paragraph()
+                        paragraph.text = line
+                output_document = presentation
+                mimetype = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            generation_ms = (time.perf_counter() - generation_started_at) * 1000
+
+            buffer_started_at = time.perf_counter()
+            output_document.save(output)
+            output_bytes = output.tell()
+            output.seek(0)
+            buffer_ms = (time.perf_counter() - buffer_started_at) * 1000
+        except Exception as exc:
+            if generation_ms == 0.0:
+                generation_ms = (time.perf_counter() - generation_started_at) * 1000
+            if buffer_started_at is not None:
+                buffer_ms = (time.perf_counter() - buffer_started_at) * 1000
+            logging.exception("Document creation failed")
+            response_started_at = time.perf_counter()
+            response = (jsonify({"error": f"Belge oluşturulamadı: {exc}"}), 500)
+            response_ms = (time.perf_counter() - response_started_at) * 1000
+            return response
+
+        response_started_at = time.perf_counter()
+        response = send_file(
+            output,
+            as_attachment=True,
+            download_name=output_name,
+            mimetype=mimetype,
+        )
+        response_ms = (time.perf_counter() - response_started_at) * 1000
+        success = True
+        return response
+    finally:
+        total_ms = (time.perf_counter() - endpoint_started_at) * 1000
+        safe_document_type = document_type if isinstance(document_type, str) and document_type in {"word", "excel", "powerpoint"} else "invalid"
+        logging.info(
+            "document_performance type=%s success=%s validation_ms=%.3f generation_ms=%.3f "
+            "buffer_ms=%.3f response_ms=%.3f total_ms=%.3f output_bytes=%d",
+            safe_document_type,
+            str(success).lower(),
+            validation_ms,
+            generation_ms,
+            buffer_ms,
+            response_ms,
+            total_ms,
+            output_bytes,
+        )
 
 
 def extract_text_from_reader(reader: PdfReader) -> str:
