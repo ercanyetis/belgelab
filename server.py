@@ -170,7 +170,7 @@ def disable_stale_app_cache(response):
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; "
-        "script-src 'self' 'sha256-kwaLn3eP/r2tN51WK5mNfToQKOUTowmq0lYDbpUQ9Qs=' https://cdnjs.cloudflare.com "
+        "script-src 'self' 'sha256-kwaLn3eP/r2tN51WK5mNfToQKOUTowmq0lYDbpUQ9Qs=' https://cdnjs.cloudflare.com https://static.cloudflareinsights.com "
         "https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.gstatic.com; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: blob: https://*.google.com https://*.gstatic.com https://*.googlesyndication.com; "
