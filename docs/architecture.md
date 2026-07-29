@@ -276,38 +276,28 @@ The files are classic scripts rather than ECMAScript modules. Their boundaries a
 
 ## 8. Service Worker
 
-**Confirmed implementation:** `app.js` registers `/sw.js` when service workers are supported. The current cache is `belgelab-cache-v34`.
+**Confirmed implementation:** `app.js` registers `/sw.js` when service workers are supported. The current cache is `belgelab-cache-v35`.
 
-During installation, the worker pre-caches the main shell, core scripts, shared styles, PWA assets, offline page, and selected informational pages. `skipWaiting()` activates the new worker promptly. Activation deletes every cache whose name differs from the current cache and then calls `clients.claim()`.
+During installation, the worker pre-caches the offline page and a fixed allowlist of safe static scripts, styles, and PWA assets. It does not pre-cache `/`, `/index.html`, landing pages, or informational HTML pages. `skipWaiting()` activates the new worker promptly. Activation deletes every cache whose name differs from the current cache and then calls `clients.claim()`, removing application-shell entries left by older cache versions.
 
-For same-origin `GET` requests, the worker uses network-first behavior:
+Navigation requests use the network and fall back only to the cached Turkish `offline.html` page when the network fails:
 
 ```mermaid
 flowchart TD
-    GET[Same-origin GET]
+    GET[Navigation GET]
     NET[Fetch network]
     OK{Fetch succeeds?}
-    UPDATE[Clone response into current cache]
     RETURN[Return network response]
-    CACHE[Look up exact cached request]
-    NAV{Navigation request?}
     OFFLINE[Return offline.html]
-    ERROR[Return Response.error]
 
     GET --> NET --> OK
-    OK -->|yes| UPDATE --> RETURN
-    OK -->|no| CACHE
-    CACHE -->|hit| RETURN
-    CACHE -->|miss| NAV
-    NAV -->|yes| OFFLINE
-    NAV -->|no| ERROR
+    OK -->|yes| RETURN
+    OK -->|no| OFFLINE
 ```
 
-Non-GET requests are not intercepted, so API uploads go directly to the network. Cross-origin requests are fetched directly and are not stored by this service worker.
+Requests whose paths exactly match the static allowlist use cache-first behavior. Other same-origin GET requests, all non-GET requests, and cross-origin requests are not intercepted or stored. API uploads therefore go directly to the network, while HTML and dynamic responses never enter the runtime cache.
 
-**Architectural inconsistency:** PDF-Lib, PDF.js, and the PDF.js worker are cross-origin CDN resources and are not part of `ASSETS`; the cross-origin branch does not cache them. The application shell can load offline, but PDF features that require those libraries are not guaranteed to work without network access.
-
-**Architectural inconsistency:** Every successful same-origin GET response is cached, without checking status or response type. This is broader than the explicit installation asset list and can retain any same-origin GET requested while the worker controls the page.
+PDF-Lib, PDF.js, and the PDF.js worker remain cross-origin runtime dependencies and are not part of `STATIC_ASSETS`. They are fetched only while the online application is running; the offline fallback does not expose the tool interface.
 
 The Flask response hook sends `Clear-Site-Data: "cache"` for API responses and no-cache headers for selected core assets. Whether browsers clear Cache Storage in response to the API header is browser-dependent; the repository contains no compatibility handling or documented rationale for the interaction with the PWA cache.
 
@@ -364,7 +354,7 @@ The dashed connections are **assumptions**, not confirmed implementation. Produc
 No target architecture or approved migration plan is implemented in this repository. The items below are documentation needs and observed decision points, not commitments or existing components:
 
 1. Keep landing-page CTA IDs, card `data-tool-id` values, and the central registry synchronized as tools are added or renamed.
-2. Decide whether offline PDF processing is a supported product capability. If it is, define a compliant strategy for locally hosting or caching PDF-Lib and PDF.js.
+2. Preserve the online-only application-shell decision when evolving the PWA: offline navigation should continue to show only `offline.html`, not a cached tool interface.
 3. Document the production reverse proxy or Cloudflare Tunnel outside the repository if credentials prevent committing its configuration.
 4. Decide whether the single-file Flask backend should remain the intended boundary as route and conversion responsibilities grow.
 5. Define whether rate limiting must use shared storage when multiple Gunicorn workers or multiple application instances are used.

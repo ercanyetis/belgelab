@@ -24,6 +24,7 @@
   let slides = [{ title: "Sunum başlığı", body: "Alt başlık veya açıklama" }];
   let activeSlide = 0;
   let isSaving = false;
+  const connectionErrorMessage = "İnternet bağlantısı yok. Bu işlem için bağlantınızı kontrol edip yeniden deneyin.";
 
   function setStatus(message, error = false) {
     status.textContent = message;
@@ -218,6 +219,10 @@
 
   async function saveDocument() {
     if (isSaving) return;
+    if (!navigator.onLine) {
+      setStatus(connectionErrorMessage, true);
+      return;
+    }
     isSaving = true;
     const savingType = activeType;
     setCreatorBusy(true, config[savingType].loadingStage);
@@ -249,8 +254,11 @@
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       setStatus(`${safeFilename()} cihazınıza indirildi.`);
     } catch (error) {
-      console.error(error);
-      setStatus(error.message, true);
+      const message = !navigator.onLine || error instanceof TypeError
+        ? connectionErrorMessage
+        : error.message;
+      if (message !== connectionErrorMessage) console.error(error);
+      setStatus(message, true);
     } finally {
       setCreatorBusy(false);
       isSaving = false;

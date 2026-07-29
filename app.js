@@ -33,6 +33,7 @@ const loadingStage = document.getElementById("loadingStage");
 const categoryButtons = document.querySelectorAll(".category-pill");
 const toolCards = document.querySelectorAll(".tool-card");
 const serverPdfTools = new Set(["unlock", "protect", "repair", "compare"]);
+const connectionErrorMessage = "İnternet bağlantısı yok. Bu işlem için bağlantınızı kontrol edip yeniden deneyin.";
 
 toolCards.forEach((card) => {
   const isServerTool = Boolean(card.dataset.operation || card.dataset.createTool)
@@ -627,6 +628,7 @@ function downloadBlob(blob, filename) {
 }
 
 async function callConversionApi(file, operation) {
+  if (!navigator.onLine) throw new Error(connectionErrorMessage);
   const formData = new FormData();
   formData.append("file", file);
   formData.append("operation", operation);
@@ -739,8 +741,11 @@ convertBtn.addEventListener("click", async () => {
     convertBtn.disabled = true;
     resetConversionFileDisplay();
   } catch (error) {
-    console.error(error);
-    setConversionStatus(`Dönüştürme hatası: ${error.message}`);
+    const message = !navigator.onLine || error instanceof TypeError
+      ? connectionErrorMessage
+      : error.message;
+    if (message !== connectionErrorMessage) console.error(error);
+    setConversionStatus(`Dönüştürme hatası: ${message}`);
   } finally {
     setConversionBusy(false);
   }

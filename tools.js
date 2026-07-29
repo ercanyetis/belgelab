@@ -31,6 +31,7 @@
   let cropDragMode = "draw";
   let cropStartArea = null;
   let isQuickToolRunning = false;
+  const connectionErrorMessage = "İnternet bağlantısı yok. Bu işlem için bağlantınızı kontrol edip yeniden deneyin.";
 
   const toolConfig = {
     compress: {
@@ -447,6 +448,7 @@
   }
 
   async function callServerTool(file, operation, values, secondFile) {
+    if (!navigator.onLine) throw new Error(connectionErrorMessage);
     const form = new FormData();
     form.append("file", file);
     if (secondFile) form.append("second_file", secondFile);
@@ -482,8 +484,11 @@
       else await editPdf(files[0], activeTool, values);
       setStatus(resultMessage || "İşlem tamamlandı; çıktı cihazınıza indirildi.");
     } catch (error) {
-      console.error(error);
-      setStatus(`İşlem tamamlanamadı: ${error.message}`, true);
+      const message = config.server && (!navigator.onLine || error instanceof TypeError)
+        ? connectionErrorMessage
+        : error.message;
+      if (message !== connectionErrorMessage) console.error(error);
+      setStatus(`İşlem tamamlanamadı: ${message}`, true);
     } finally {
       setQuickToolBusy(false);
     }

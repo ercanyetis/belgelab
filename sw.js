@@ -1,40 +1,49 @@
-const CACHE_NAME = 'belgelab-cache-v34';
-const ASSETS = ['/', '/index.html', '/offline.html', '/style.css', '/app.js', '/tools.js', '/creators.js', '/tool-navigation.js', '/consent.js', '/ads.js', '/favicon.ico', '/favicon-48.png', '/apple-touch-icon.png', '/icon.svg', '/icon-192.png', '/icon-512.png', '/manifest.json', '/hakkimizda.html', '/rehberler.html', '/iletisim.html', '/privacy.html', '/kvkk.html', '/cookies.html', '/terms.html', '/licenses.html'];
+const CACHE_NAME = "belgelab-cache-v35";
+const OFFLINE_URL = "/offline.html";
+const STATIC_ASSETS = [
+  OFFLINE_URL,
+  "/style.css",
+  "/app.js",
+  "/tools.js",
+  "/creators.js",
+  "/tool-navigation.js",
+  "/consent.js",
+  "/ads.js",
+  "/favicon.ico",
+  "/favicon-48.png",
+  "/apple-touch-icon.png",
+  "/icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/manifest.json",
+];
+const STATIC_PATHS = new Set(STATIC_ASSETS);
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') {
-    return;
-  }
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
 
   const requestUrl = new URL(event.request.url);
-  if (requestUrl.origin !== self.location.origin) {
-    event.respondWith(fetch(event.request));
+  if (requestUrl.origin !== self.location.origin) return;
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)));
     return;
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-        return response;
-      })
-      .catch(() => caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        if (event.request.mode === 'navigate') return caches.match('/offline.html');
-        return Response.error();
-      }))
-  );
+  if (STATIC_PATHS.has(requestUrl.pathname)) {
+    event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
+  }
 });

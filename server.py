@@ -161,6 +161,10 @@ def disable_stale_app_cache(response):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
+        if request.path in {"/", "/index.html"}:
+            response.headers.pop("ETag", None)
+            response.headers.pop("Last-Modified", None)
+            response.headers.pop("Accept-Ranges", None)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["X-Frame-Options"] = "DENY"
