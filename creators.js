@@ -71,27 +71,38 @@
     }
   }
 
+  function open(toolName) {
+    const selected = config[toolName];
+    if (!selected) return null;
+    activeType = toolName;
+    title.textContent = selected.title;
+    description.textContent = selected.description;
+    extension.textContent = selected.extension;
+    Object.entries(workspaces).forEach(([name, element]) => {
+      element.hidden = name !== activeType;
+    });
+    setStatus("Düzenlemeye başlayabilirsiniz.");
+    panel.hidden = false;
+    if (activeType === "excel" && !document.getElementById("excelGrid").rows.length) renderExcelGrid();
+    if (activeType === "powerpoint") renderSlides();
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    return panel;
+  }
+
+  function close() {
+    panel.hidden = true;
+  }
+
+  window.BelgeLabCreators = { ...window.BelgeLabCreators, open, close };
+
   document.querySelectorAll("[data-create-tool]").forEach((card) => {
     card.addEventListener("click", () => {
-      activeType = card.dataset.createTool;
-      const selected = config[activeType];
-      title.textContent = selected.title;
-      description.textContent = selected.description;
-      extension.textContent = selected.extension;
-      Object.entries(workspaces).forEach(([name, element]) => {
-        element.hidden = name !== activeType;
-      });
-      setStatus("Düzenlemeye başlayabilirsiniz.");
-      panel.hidden = false;
-      if (activeType === "excel" && !document.getElementById("excelGrid").rows.length) renderExcelGrid();
-      if (activeType === "powerpoint") renderSlides();
-      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (window.BelgeLabNavigation?.openTool(card.dataset.toolId)) return;
+      open(card.dataset.createTool);
     });
   });
 
-  document.getElementById("closeCreator").addEventListener("click", () => {
-    panel.hidden = true;
-  });
+  document.getElementById("closeCreator").addEventListener("click", close);
 
   document.querySelectorAll("[data-command]").forEach((button) => {
     button.addEventListener("click", () => {

@@ -224,18 +224,29 @@ categoryButtons.forEach((button) => {
   });
 });
 
+function openOperation(operation) {
+  if (!conversionRules[operation]) return null;
+  conversionType.value = operation;
+  conversionType.dispatchEvent(new Event("change"));
+  const converter = document.getElementById("converter");
+  converter.scrollIntoView({ behavior: "smooth" });
+  return converter;
+}
+
+function openEditor() {
+  const editor = document.getElementById("editor");
+  editor.scrollIntoView({ behavior: "smooth" });
+  return editor.nextElementSibling?.querySelector(".upload-panel") || null;
+}
+
+window.BelgeLabApp = { ...window.BelgeLabApp, openOperation, openEditor };
+
 toolCards.forEach((card) => {
   card.addEventListener("click", () => {
-    if (card.dataset.pdfTool || card.dataset.createTool) {
-      return;
-    }
-    if (card.dataset.operation) {
-      conversionType.value = card.dataset.operation;
-      conversionType.dispatchEvent(new Event("change"));
-      document.getElementById("converter").scrollIntoView({ behavior: "smooth" });
-    } else {
-      document.getElementById(card.dataset.target || "editor").scrollIntoView({ behavior: "smooth" });
-    }
+    if (card.dataset.pdfTool || card.dataset.createTool) return;
+    if (window.BelgeLabNavigation?.openTool(card.dataset.toolId)) return;
+    if (card.dataset.operation) openOperation(card.dataset.operation);
+    else openEditor();
   });
 });
 
@@ -299,6 +310,12 @@ dropzone.addEventListener("dragover", (event) => {
 
 dropzone.addEventListener("dragleave", () => {
   dropzone.style.borderColor = "rgba(255,255,255,0.2)";
+});
+
+dropzone.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  fileInput.click();
 });
 
 dropzone.addEventListener("drop", async (event) => {

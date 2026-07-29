@@ -160,40 +160,53 @@
     };
   }
 
-  document.querySelectorAll("[data-pdf-tool]").forEach((card) => {
-    card.addEventListener("click", () => {
-      activeTool = card.dataset.pdfTool;
-      const config = toolConfig[activeTool];
-      title.textContent = config.title;
-      description.textContent = card.querySelector("span:last-child").textContent;
-      filesInput.accept = config.accept;
-      filesInput.multiple = Boolean(config.multiple);
-      filesInput.value = "";
-      secondInput.value = "";
-      filePrompt.textContent = config.prompt;
-      fileTypes.textContent = config.accept.replaceAll(".", "").toUpperCase();
-      secondWrap.hidden = !config.second;
-      renderFields(config.fields);
-      processingNotice.className = `processing-notice ${config.server ? "processing-notice--server" : "processing-notice--local"}`;
-      processingNotice.innerHTML = config.server
-        ? "<strong>Sunucuda işlenir</strong> Seçtiğiniz dosya bu işlem için uygulama sunucusuna gönderilir ve işlem sonunda geçici çalışma alanından silinir."
-        : "<strong>Cihazınızda işlenir</strong> Seçtiğiniz dosya bu işlem sırasında sunucuya gönderilmez.";
-      cropWorkspace.hidden = activeTool !== "crop";
-      if (activeTool === "crop") cropReset.after(runButton);
-      else runButtonHome.after(runButton);
-      cropArea = null;
-      updateCropSelection();
-      setStatus("Dosya seçimi bekleniyor.");
-      panel.hidden = false;
-      panel.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-  });
+  function open(toolName) {
+    const config = toolConfig[toolName];
+    if (!config) return null;
+    const card = document.querySelector(`[data-pdf-tool="${toolName}"]`);
+    if (!card) return null;
+    activeTool = toolName;
+    title.textContent = config.title;
+    description.textContent = card.querySelector("span:last-child").textContent;
+    filesInput.accept = config.accept;
+    filesInput.multiple = Boolean(config.multiple);
+    filesInput.value = "";
+    secondInput.value = "";
+    filePrompt.textContent = config.prompt;
+    fileTypes.textContent = config.accept.replaceAll(".", "").toUpperCase();
+    secondWrap.hidden = !config.second;
+    renderFields(config.fields);
+    processingNotice.className = `processing-notice ${config.server ? "processing-notice--server" : "processing-notice--local"}`;
+    processingNotice.innerHTML = config.server
+      ? "<strong>Sunucuda işlenir</strong> Seçtiğiniz dosya bu işlem için uygulama sunucusuna gönderilir ve işlem sonunda geçici çalışma alanından silinir."
+      : "<strong>Cihazınızda işlenir</strong> Seçtiğiniz dosya bu işlem sırasında sunucuya gönderilmez.";
+    cropWorkspace.hidden = activeTool !== "crop";
+    if (activeTool === "crop") cropReset.after(runButton);
+    else runButtonHome.after(runButton);
+    cropArea = null;
+    updateCropSelection();
+    setStatus("Dosya seçimi bekleniyor.");
+    panel.hidden = false;
+    panel.scrollIntoView({ behavior: "smooth", block: "center" });
+    return panel;
+  }
 
-  closeButton.addEventListener("click", () => {
+  function close() {
     panel.hidden = true;
     activeTool = null;
     cropWorkspace.hidden = true;
+  }
+
+  window.BelgeLabTools = { ...window.BelgeLabTools, open, close };
+
+  document.querySelectorAll("[data-pdf-tool]").forEach((card) => {
+    card.addEventListener("click", () => {
+      if (window.BelgeLabNavigation?.openTool(card.dataset.toolId)) return;
+      open(card.dataset.pdfTool);
+    });
   });
+
+  closeButton.addEventListener("click", close);
 
   filesInput.addEventListener("change", async () => {
     const count = filesInput.files.length;

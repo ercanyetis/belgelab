@@ -1,5 +1,5 @@
-const CACHE_NAME = 'belgelab-cache-v33';
-const ASSETS = ['/', '/index.html', '/offline.html', '/style.css', '/app.js', '/tools.js', '/creators.js', '/consent.js', '/ads.js', '/favicon.ico', '/favicon-48.png', '/apple-touch-icon.png', '/icon.svg', '/icon-192.png', '/icon-512.png', '/manifest.json', '/hakkimizda.html', '/rehberler.html', '/iletisim.html', '/privacy.html', '/kvkk.html', '/cookies.html', '/terms.html', '/licenses.html'];
+const CACHE_NAME = 'belgelab-cache-v34';
+const ASSETS = ['/', '/index.html', '/offline.html', '/style.css', '/app.js', '/tools.js', '/creators.js', '/tool-navigation.js', '/consent.js', '/ads.js', '/favicon.ico', '/favicon-48.png', '/apple-touch-icon.png', '/icon.svg', '/icon-192.png', '/icon-512.png', '/manifest.json', '/hakkimizda.html', '/rehberler.html', '/iletisim.html', '/privacy.html', '/kvkk.html', '/cookies.html', '/terms.html', '/licenses.html'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
