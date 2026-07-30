@@ -49,19 +49,23 @@ function formatFileSize(bytes) {
   return (bytes / 1024 / 1024).toFixed(2) + " MB";
 }
 
-function renderFileSelection(container, files, { onRemove, onClear, replaceInput, showClear = false } = {}) {
+function renderFileSelection(container, files, { onRemove, onClear, replaceInput, showClear = false, actionsOnly = false } = {}) {
   container.replaceChildren();
   container.hidden = !files.length;
+  container.classList.toggle("file-selection--actions-only", actionsOnly);
   if (!files.length) return;
   const list = document.createElement("ul");
   files.forEach((file, index) => {
     const item = document.createElement("li");
-    const details = document.createElement("span");
-    const name = document.createElement("strong");
-    const size = document.createElement("small");
-    name.textContent = file.name;
-    size.textContent = formatFileSize(file.size);
-    details.append(name, size);
+    if (!actionsOnly) {
+      const details = document.createElement("span");
+      const name = document.createElement("strong");
+      const size = document.createElement("small");
+      name.textContent = file.name;
+      size.textContent = formatFileSize(file.size);
+      details.append(name, size);
+      item.appendChild(details);
+    }
     const actions = document.createElement("span");
     if (replaceInput) {
       const replace = document.createElement("button");
@@ -79,7 +83,7 @@ function renderFileSelection(container, files, { onRemove, onClear, replaceInput
     remove.setAttribute("aria-label", file.name + " dosyasını kaldır");
     remove.addEventListener("click", () => onRemove(index));
     actions.appendChild(remove);
-    item.append(details, actions);
+    item.appendChild(actions);
     list.appendChild(item);
   });
   container.appendChild(list);
@@ -703,6 +707,7 @@ function showSelectedConversionFile(file) {
   renderFileSelection(conversionFileSelection, [file], {
     replaceInput: conversionInput,
     onRemove: () => clearConversionSelection(),
+    actionsOnly: true,
   });
 }
 

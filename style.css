@@ -536,7 +536,15 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .conversion-mode[hidden] { display: none; }
 .conversion-mode select { min-width: 0; }
-.converter-controls > .converter-dropzone {
+.conversion-file-field {
+  grid-column: 1 / 4;
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  gap: 10px;
+}
+.conversion-file-field > .converter-dropzone { min-width: 0; flex: 1 1 auto; }
+.converter-controls .converter-dropzone {
   min-width: 0;
   min-height: 76px;
   padding: 10px 13px;
@@ -544,34 +552,38 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   flex-wrap: wrap;
   gap: 6px 10px;
 }
-.converter-controls > .converter-dropzone::before { flex: 0 0 36px; width: 36px; height: 36px; font-size: 21px; }
-.converter-controls > .converter-dropzone::after { margin: 0; padding: 6px 10px; }
-.converter-controls > .converter-dropzone strong { flex: 1; min-width: 155px; text-align: left; }
-.converter-controls > .converter-dropzone span { font-size: 12px; }
-.converter-controls > .converter-dropzone.has-file {
+.converter-controls .converter-dropzone::before { flex: 0 0 36px; width: 36px; height: 36px; font-size: 21px; }
+.converter-controls .converter-dropzone::after { margin: 0; padding: 6px 10px; }
+.converter-controls .converter-dropzone strong { flex: 1; min-width: 155px; text-align: left; }
+.converter-controls .converter-dropzone span { font-size: 12px; }
+.converter-controls .converter-dropzone.has-file {
   color: #245f3b;
   background: linear-gradient(145deg, #f5fff8, #e7f8ed);
   border-color: #35a260;
   border-style: solid;
   box-shadow: inset 0 0 0 3px rgba(53, 162, 96, .08), 0 10px 22px rgba(35, 112, 65, .12);
 }
-.converter-controls > .converter-dropzone.has-file::before {
+.converter-controls .converter-dropzone.has-file::before {
   content: "✓";
   background: #35a260;
   box-shadow: 0 6px 14px rgba(53, 162, 96, .28);
 }
-.converter-controls > .converter-dropzone.has-file::after {
+.converter-controls .converter-dropzone.has-file::after {
   content: "DEĞİŞTİR";
   background: #287e49;
 }
-.converter-controls > .converter-dropzone.has-file strong {
+.converter-controls .converter-dropzone.has-file strong {
   overflow: hidden;
   color: #174c2b;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .converter-controls > button { min-height: 76px; align-self: end; font-size: 15px; }
-.converter-controls > .conversion-mode[hidden] + .converter-dropzone { grid-column: span 2; }
+.conversion-file-field > .file-selection--actions-only { display: flex; margin: 0; align-items: center; flex: 0 0 auto; }
+.file-selection--actions-only li > span:last-child {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 
 .quick-tool-panel {
   width: min(940px, calc(100% - 32px));
@@ -792,7 +804,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 @media (max-width: 1050px) {
   .converter-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .converter-controls > .conversion-mode[hidden] + .converter-dropzone { grid-column: auto; }
+  .conversion-file-field { grid-column: 1 / -1; }
 }
 @media (max-width: 800px) {
   .site-header {
@@ -813,7 +825,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   .thumb-canvas { height: 145px; }
   .converter-panel { width: calc(100% - 28px); }
   .converter-controls { grid-template-columns: 1fr; }
-  .converter-controls > .converter-dropzone { width: 100%; }
+  .conversion-file-field { grid-column: auto; width: 100%; }
   .word-editor { padding: 30px 24px; }
   .slide-builder { grid-template-columns: 1fr; }
   .slide-list { flex-direction: row; }
@@ -835,6 +847,11 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   .tool-card { min-height: 0; padding: 20px; border-radius: 10px 22px 22px 22px; }
   .tool-card > span:last-child { line-height: 1.5; }
   .converter-dropzone { min-width: 100%; }
+  .conversion-file-field { align-items: stretch; flex-wrap: wrap; }
+  .conversion-file-field > .file-selection--actions-only { width: 100%; }
+  .file-selection--actions-only ul,
+  .file-selection--actions-only li,
+  .file-selection--actions-only li > span:last-child { width: 100%; }
 }
 
 /* PDF birleştir landing page */

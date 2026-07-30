@@ -435,17 +435,19 @@
           </select>
         </label>
 
-        <label class="converter-dropzone" id="conversionDropzone" for="conversionInput">
-          <strong id="conversionFileName">Dönüştürülecek dosyayı seçin</strong>
-          <span id="conversionFileHint">PDF, DOCX, XLSX, PPTX veya DWG</span>
-        </label>
-        <input
-          id="conversionInput"
-          type="file"
-          accept=".pdf,.docx,.xlsx,.pptx,.dwg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/acad,application/x-acad,application/autocad_dwg"
-          hidden
-        />
-        <div id="conversionFileSelection" class="file-selection" hidden></div>
+        <div class="conversion-file-field">
+          <label class="converter-dropzone" id="conversionDropzone" for="conversionInput">
+            <strong id="conversionFileName">Dönüştürülecek dosyayı seçin</strong>
+            <span id="conversionFileHint">PDF, DOCX, XLSX, PPTX veya DWG</span>
+          </label>
+          <input
+            id="conversionInput"
+            type="file"
+            accept=".pdf,.docx,.xlsx,.pptx,.dwg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/acad,application/x-acad,application/autocad_dwg"
+            hidden
+          />
+          <div id="conversionFileSelection" class="file-selection" hidden></div>
+        </div>
 
         <button id="convertBtn" class="secondary" disabled>Dönüştür</button>
       </div>
