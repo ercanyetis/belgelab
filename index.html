@@ -34,28 +34,29 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "BelgeLab",
-        "url": "https://belgelab.com.tr/",
-        "applicationCategory": "BusinessApplication",
-        "operatingSystem": "Web",
-        "inLanguage": "tr",
-        "description": "PDF düzenleme, sıkıştırma, kırpma ve ofis belgesi dönüştürme araçları.",
-        "image": "https://belgelab.com.tr/icon-512.png",
-        "publisher": {
-          "@type": "Organization",
-          "name": "BelgeLab",
-          "url": "https://belgelab.com.tr/",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "https://belgelab.com.tr/icon-512.png"
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://belgelab.com.tr/#organization",
+            "name": "BelgeLab",
+            "url": "https://belgelab.com.tr/",
+            "logo": {
+              "@type": "ImageObject",
+              "@id": "https://belgelab.com.tr/#logo",
+              "url": "https://belgelab.com.tr/icon-512.png",
+              "width": 512,
+              "height": 512
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://belgelab.com.tr/#website",
+            "url": "https://belgelab.com.tr/",
+            "name": "BelgeLab",
+            "inLanguage": "tr",
+            "publisher": {"@id": "https://belgelab.com.tr/#organization"}
           }
-        },
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "TRY"
-        }
+        ]
       }
     </script>
   </head>

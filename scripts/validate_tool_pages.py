@@ -82,14 +82,47 @@ def main() -> int:
         )
         try:
             schema = json.loads(schema_match.group(1)) if schema_match else {}
-            entities = schema.get("@graph", [])[1].get("mainEntity", [])
-            if len(entities) != parser.details_count:
+            graph = schema.get("@graph", [])
+            by_type = {item.get("@type"): item for item in graph}
+            faq_entities = by_type.get("FAQPage", {}).get("mainEntity", [])
+            if len(faq_entities) != parser.details_count:
                 errors.append(f"{filename}: görünür SSS ve JSON-LD eşleşmiyor")
+            required_types = {"WebPage", "BreadcrumbList", "FAQPage"}
+            if missing_types := required_types.difference(by_type):
+                errors.append(f"{filename}: eksik schema türleri {sorted(missing_types)}")
+            breadcrumb = by_type.get("BreadcrumbList", {}).get("itemListElement", [])
+            if [item.get("position") for item in breadcrumb] != [1, 2]:
+                errors.append(f"{filename}: BreadcrumbList sırası geçersiz")
+            elif (breadcrumb[0].get("item") != "https://belgelab.com.tr/" or
+                  breadcrumb[1].get("item") != f"https://belgelab.com.tr/{filename}"):
+                errors.append(f"{filename}: BreadcrumbList URL'leri geçersiz")
+            page = by_type.get("WebPage", {})
+            if page.get("isPartOf", {}).get("@id") != "https://belgelab.com.tr/#website":
+                errors.append(f"{filename}: WebPage/WebSite ilişkisi geçersiz")
         except (json.JSONDecodeError, IndexError, AttributeError):
             errors.append(f"{filename}: geçersiz JSON-LD")
         for href in parser.hrefs:
             if href.startswith("/") and href.endswith(".html") and not (ROOT / href[1:]).is_file():
                 errors.append(f"{filename}: kırık dahili bağlantı {href}")
+    home_source = (ROOT / "index.html").read_text(encoding="utf-8")
+    home_schema_match = re.search(
+        r'<script type="application/ld\+json">(.*?)</script>', home_source, re.S
+    )
+    try:
+        home_schema = json.loads(home_schema_match.group(1)) if home_schema_match else {}
+        home_graph = {item.get("@type"): item for item in home_schema.get("@graph", [])}
+        if {"Organization", "WebSite"}.difference(home_graph):
+            errors.append("index.html: Organization veya WebSite schema eksik")
+        organization = home_graph.get("Organization", {})
+        website = home_graph.get("WebSite", {})
+        if organization.get("@id") != "https://belgelab.com.tr/#organization":
+            errors.append("index.html: Organization @id geçersiz")
+        if website.get("publisher", {}).get("@id") != organization.get("@id"):
+            errors.append("index.html: WebSite/Organization ilişkisi geçersiz")
+        if website.get("@id") != "https://belgelab.com.tr/#website":
+            errors.append("index.html: WebSite @id geçersiz")
+    except (json.JSONDecodeError, AttributeError):
+        errors.append("index.html: geçersiz JSON-LD")
     if errors:
         print("\n".join(errors))
         return 1

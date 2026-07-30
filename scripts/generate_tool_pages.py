@@ -9,6 +9,8 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+SITE_URL = "https://belgelab.com.tr/"
+WEBSITE_ID = SITE_URL + "#website"
 
 # filename: name, tool id, input, action, output, limitation, related pages
 TOOLS = {
@@ -139,7 +141,15 @@ def render(filename: str, cfg: tuple[str, ...], source_html: str) -> str:
         "@graph": [
             {"@type": "WebPage", "@id": canonical + "#webpage", "url": canonical,
              "name": title.replace(" | BelgeLab", ""), "description": description,
-             "inLanguage": "tr", "isPartOf": {"@type": "WebSite", "name": "BelgeLab", "url": "https://belgelab.com.tr/"}},
+             "inLanguage": "tr", "isPartOf": {"@id": WEBSITE_ID},
+             "breadcrumb": {"@id": canonical + "#breadcrumb"}},
+            {"@type": "BreadcrumbList", "@id": canonical + "#breadcrumb",
+             "itemListElement": [
+                 {"@type": "ListItem", "position": 1, "name": "Ana Sayfa",
+                  "item": SITE_URL},
+                 {"@type": "ListItem", "position": 2, "name": name,
+                  "item": canonical},
+             ]},
             {"@type": "FAQPage", "@id": canonical + "#faq",
              "isPartOf": {"@id": canonical + "#webpage"}, "mainEntity": faq_json},
         ],
