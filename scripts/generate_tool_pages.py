@@ -14,7 +14,8 @@ WEBSITE_ID = SITE_URL + "#website"
 
 # filename: name, tool id, input, action, output, limitation, related pages
 TOOLS = {
-    "pdf-birlestir.html": ("PDF Birleştir", "pdf-editor", "birden fazla PDF", "sayfaları tek belgede birleştirme", "birleştirilmiş PDF", "Çıktı sırası, araçta belirlediğiniz sayfa sırasına göre oluşur.", ["pdf-sayfalari-duzenle.html", "pdf-kucult.html", "pdf-duzenle.html"]),
+    "pdf-birlestir.html": ("PDF Birleştir", "pdf-editor", "birden fazla PDF", "sayfaları tek belgede birleştirme", "birleştirilmiş PDF", "Çıktı sırası, araçta belirlediğiniz sayfa sırasına göre oluşur.", ["pdf-bol.html", "pdf-sayfalari-duzenle.html", "pdf-kucult.html"]),
+    "pdf-bol.html": ("PDF Böl", "pdf-split", "bir PDF belgesi", "belgeyi sayfa aralıklarına, tek sayfalara veya eşit büyüklükte bölümlere ayırma", "PDF bölümleri içeren ZIP arşivi", "Aynı sayfa birden fazla aralıkta kullanılamaz ve aralıklar belgenin toplam sayfa sayısını aşamaz.", ["pdf-birlestir.html", "pdf-sayfalari-duzenle.html", "pdf-kucult.html"]),
     "pdf-sayfalari-duzenle.html": ("PDF Sayfalarını Düzenle", "pdf-editor", "bir PDF belgesi", "sayfaları sıralama, döndürme veya kaldırma", "düzenlenmiş PDF", "Kaynak dosya değişmez; düzenlemeler indirilen yeni kopyaya uygulanır.", ["pdf-birlestir.html", "pdf-dondur.html", "pdf-kirp.html"]),
     "pdf-duzenle.html": ("PDF Düzenle", "pdf-editor", "bir PDF belgesi", "sayfa düzeni üzerinde değişiklik yapma", "düzenlenmiş PDF", "Araç, masaüstü yayıncılık uygulamalarındaki tüm metin düzenleme özelliklerini sunmaz.", ["pdf-sayfalari-duzenle.html", "pdf-birlestir.html", "pdf-filigran.html"]),
     "pdf-kucult.html": ("PDF Küçült", "pdf-compress", "boyutu azaltılacak PDF", "dosya boyutunu azaltma", "küçültülmüş PDF", "Küçültme sonucu belgenin içeriğine göre değişir; çıktının okunabilirliğini kontrol edin.", ["pdf-birlestir.html", "pdf-onar.html", "pdf-parola-ekle.html"]),
@@ -237,7 +238,8 @@ def render(filename: str, cfg: tuple[str, ...], source_html: str) -> str:
 def main() -> None:
     for filename, config in TOOLS.items():
         path = ROOT / filename
-        path.write_text(render(filename, config, path.read_text(encoding="utf-8")), encoding="utf-8")
+        source = path.read_text(encoding="utf-8") if path.exists() else ""
+        path.write_text(render(filename, config, source), encoding="utf-8")
     print(f"{len(TOOLS)} araç sayfası Araç Sayfası Standardı v1.0 ile üretildi.")
 
 

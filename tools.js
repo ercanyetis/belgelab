@@ -34,6 +34,38 @@
   const connectionErrorMessage = "İnternet bağlantısı yok. Bu işlem için bağlantınızı kontrol edip yeniden deneyin.";
 
   const toolConfig = {
+    split: {
+      title: "PDF böl",
+      accept: ".pdf",
+      prompt: "Bölünecek PDF'i seçin",
+      server: true,
+      fields: [
+        {
+          id: "split_mode",
+          label: "Bölme yöntemi",
+          type: "select",
+          options: [
+            { value: "ranges", label: "Sayfa aralıklarına göre" },
+            { value: "each", label: "Her sayfayı ayrı PDF yap" },
+            { value: "chunk", label: "Her N sayfada böl" },
+          ],
+        },
+        {
+          id: "ranges",
+          label: "Sayfa aralıkları",
+          type: "text",
+          value: "1-3,8-10",
+          visibleWhen: { field: "split_mode", value: "ranges" },
+        },
+        {
+          id: "chunk_size",
+          label: "Her bölümdeki sayfa sayısı",
+          type: "number",
+          value: "5",
+          visibleWhen: { field: "split_mode", value: "chunk" },
+        },
+      ],
+    },
     compress: {
       title: "PDF sıkıştırma",
       accept: ".pdf",
@@ -97,6 +129,10 @@
     fields.forEach((field) => {
       const label = document.createElement("label");
       label.textContent = field.label;
+      if (field.visibleWhen) {
+        label.dataset.visibleWhenField = field.visibleWhen.field;
+        label.dataset.visibleWhenValue = field.visibleWhen.value;
+      }
       let input;
       if (field.type === "select") {
         input = document.createElement("select");
@@ -115,6 +151,16 @@
       label.appendChild(input);
       options.appendChild(label);
     });
+    const syncConditionalFields = () => {
+      options.querySelectorAll("[data-visible-when-field]").forEach((label) => {
+        const controller = options.querySelector(`[data-option="${label.dataset.visibleWhenField}"]`);
+        label.hidden = controller?.value !== label.dataset.visibleWhenValue;
+      });
+    };
+    options.querySelectorAll("select[data-option]").forEach((select) => {
+      select.addEventListener("change", syncConditionalFields);
+    });
+    syncConditionalFields();
   }
 
   function updateCropSelection() {

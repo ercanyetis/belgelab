@@ -11,7 +11,7 @@ from html.parser import HTMLParser
 from generate_tool_pages import ROOT, TOOLS, words
 
 REGISTRY = {
-    "pdf-editor", "pdf-compress", "create-word", "create-excel", "create-powerpoint",
+    "pdf-editor", "pdf-split", "pdf-compress", "create-word", "create-excel", "create-powerpoint",
     "pdf-to-word", "pdf-to-powerpoint", "pdf-to-excel", "word-to-pdf", "dwg-to-pdf",
     "powerpoint-to-pdf", "excel-to-pdf", "pdf-to-jpg", "jpg-to-pdf", "pdf-sign",
     "pdf-watermark", "pdf-rotate", "pdf-unlock", "pdf-protect", "pdf-page-numbers",

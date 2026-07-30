@@ -129,6 +129,90 @@ def enforce_pdf_page_limit(reader: PdfReader) -> None:
         raise ValueError(f"PDF en fazla {MAX_PDF_PAGES} sayfa içerebilir.")
 
 
+def parse_split_ranges(mode: str, ranges_value: str, chunk_value: str, page_count: int) -> list[tuple[int, int]]:
+    if page_count < 1:
+        raise ValueError("PDF içinde bölünebilecek sayfa bulunamadı.")
+    if mode == "each":
+        return [(page, page) for page in range(1, page_count + 1)]
+    if mode == "chunk":
+        try:
+            chunk_size = int(chunk_value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Her bölüm için geçerli bir sayfa sayısı girin.") from exc
+        if chunk_size < 1 or chunk_size > page_count:
+            raise ValueError(f"Bölüm boyutu 1 ile {page_count} arasında olmalıdır.")
+        return [
+            (start, min(start + chunk_size - 1, page_count))
+            for start in range(1, page_count + 1, chunk_size)
+        ]
+    if mode != "ranges":
+        raise ValueError("Geçerli bir bölme yöntemi seçin.")
+
+    tokens = [token.strip() for token in ranges_value.split(",") if token.strip()]
+    if not tokens:
+        raise ValueError("En az bir sayfa aralığı girin.")
+    if len(tokens) > MAX_PDF_PAGES:
+        raise ValueError("Çok fazla sayfa aralığı girildi.")
+
+    result: list[tuple[int, int]] = []
+    selected_pages: set[int] = set()
+    for token in tokens:
+        match = re.fullmatch(r"(\d+)(?:\s*-\s*(\d+))?", token)
+        if not match:
+            raise ValueError(f"Geçersiz sayfa aralığı: {token}")
+        start = int(match.group(1))
+        end = int(match.group(2) or start)
+        if start < 1 or end < start:
+            raise ValueError(f"Geçersiz sayfa aralığı: {token}")
+        if end > page_count:
+            raise ValueError(f"{token} aralığı {page_count} sayfalık belge sınırını aşıyor.")
+        pages = set(range(start, end + 1))
+        if selected_pages.intersection(pages):
+            raise ValueError(f"{token} aralığında daha önce seçilmiş sayfalar var.")
+        selected_pages.update(pages)
+        result.append((start, end))
+    return result
+
+
+def split_pdf_response(reader: PdfReader, uploaded_name: str, ranges: list[tuple[int, int]]):
+    base_name = Path(uploaded_name).stem.strip()
+    safe_base = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "_", base_name)[:80] or "belge"
+    width = max(3, len(str(len(reader.pages))))
+
+    def output_name(start: int, end: int) -> str:
+        if start == end:
+            return f"{safe_base}_{start:0{width}d}.pdf"
+        return f"{safe_base}_{start:0{width}d}-{end:0{width}d}.pdf"
+
+    if len(ranges) == 1:
+        start, end = ranges[0]
+        writer = PdfWriter()
+        for page_index in range(start - 1, end):
+            writer.add_page(reader.pages[page_index])
+        output = io.BytesIO()
+        writer.write(output)
+        return attachment_response(output.getvalue(), output_name(start, end), "application/pdf")
+
+    archive = tempfile.SpooledTemporaryFile(max_size=8 * 1024 * 1024, mode="w+b")
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
+        for start, end in ranges:
+            writer = PdfWriter()
+            for page_index in range(start - 1, end):
+                writer.add_page(reader.pages[page_index])
+            part = io.BytesIO()
+            writer.write(part)
+            bundle.writestr(output_name(start, end), part.getvalue())
+    archive.seek(0)
+    response = send_file(
+        archive,
+        as_attachment=True,
+        download_name=f"{safe_base}_bolunmus.zip",
+        mimetype="application/zip",
+    )
+    response.call_on_close(archive.close)
+    return response
+
+
 @app.before_request
 def enforce_canonical_origin():
     protected_paths = {
@@ -1146,7 +1230,7 @@ def pdf_tool():
     if Path(uploaded.filename).suffix.lower() != ".pdf":
         return jsonify({"error": "Bu araç yalnızca PDF dosyalarını kabul eder."}), 400
 
-    supported = {"protect", "unlock", "repair", "compare"}
+    supported = {"protect", "unlock", "repair", "compare", "split"}
     if operation not in supported:
         return jsonify({"error": "Desteklenmeyen PDF aracı."}), 400
 
@@ -1173,6 +1257,15 @@ def pdf_tool():
         if reader.is_encrypted:
             return jsonify({"error": "Bu işlemden önce PDF kilidini açın."}), 400
         enforce_pdf_page_limit(reader)
+
+        if operation == "split":
+            ranges = parse_split_ranges(
+                request.form.get("split_mode", ""),
+                request.form.get("ranges", ""),
+                request.form.get("chunk_size", ""),
+                len(reader.pages),
+            )
+            return split_pdf_response(reader, uploaded.filename, ranges)
 
         if operation == "protect":
             if len(password) < 4:

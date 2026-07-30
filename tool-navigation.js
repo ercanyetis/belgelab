@@ -1,6 +1,7 @@
 (() => {
   const registry = {
     "pdf-editor": { type: "editor" },
+    "pdf-split": { type: "quick", value: "split" },
     "pdf-compress": { type: "quick", value: "compress" },
     "create-word": { type: "creator", value: "word" },
     "create-excel": { type: "creator", value: "excel" },
