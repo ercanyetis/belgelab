@@ -91,7 +91,7 @@
           <strong>PDF birleştir</strong>
           <span>Birden fazla PDF'i seçtiğiniz sırayla tek bir dosyanın sonunda buluşturun.</span>
         </button>
-        <button class="tool-card" data-category="workflow edit" data-pdf-tool="split" data-tool-id="pdf-split">
+        <button class="tool-card" data-category="workflow edit" data-target="editor" data-editor-tool="split" data-tool-id="pdf-split">
           <span class="tool-icon split-icon" aria-hidden="true"><i>↖</i><i>↘</i></span>
           <strong>PDF böl</strong>
           <span>Sayfa aralıklarına, tek tek sayfalara veya belirlediğiniz sayfa sayısına göre ayrı PDF'ler oluşturun.</span>
@@ -310,24 +310,6 @@
           <input id="quickSecondFile" type="file" accept="application/pdf" hidden>
         </div>
         <div id="quickOptions" class="quick-options"></div>
-        <section id="splitWorkspace" class="split-workspace" aria-labelledby="splitWorkspaceTitle" hidden>
-          <div class="split-workspace-heading">
-            <div>
-              <span class="eyebrow">SAYFA SEÇİMİ</span>
-              <h3 id="splitWorkspaceTitle">PDF'yi böl</h3>
-            </div>
-            <strong id="splitPageCount">PDF seçimi bekleniyor</strong>
-          </div>
-          <div id="splitPagePreview" class="split-page-preview" aria-label="PDF sayfaları"></div>
-          <div id="splitRangeControls" class="split-range-controls">
-            <div class="split-range-title">
-              <div><strong>Aralık modu</strong><span>Her aralık ayrı bir PDF oluşturur.</span></div>
-              <button id="addSplitRange" class="secondary" type="button">+ Aralık ekle</button>
-            </div>
-            <div id="splitRangeList" class="split-range-list"></div>
-          </div>
-          <p id="splitValidation" class="status" role="status">Önce bölünecek PDF'i seçin.</p>
-        </section>
         <div id="cropWorkspace" class="crop-workspace" hidden>
           <div class="crop-toolbar">
             <strong>Kırpılacak alanı seçin</strong>
@@ -382,15 +364,67 @@
       </section>
 
       <section class="panel editor-panel">
-        <div class="toolbar">
-          <button id="rotateBtn" disabled>90° döndür</button>
-          <button id="addPageBtn" disabled>Boş sayfa ekle</button>
-          <button id="deletePageBtn" disabled>Sayfayı sil</button>
-          <button id="finishEditBtn" class="finish-edit-btn" disabled>Düzenlemeyi tamamla</button>
+        <div class="editor-tabs" role="tablist" aria-label="PDF editörü bölümleri">
+          <button id="editorPagesTab" class="active" type="button" role="tab" aria-selected="true" aria-controls="editorPagesPane">Sayfalar</button>
+          <button id="editorToolsTab" type="button" role="tab" aria-selected="false" aria-controls="editorToolsPane">Araçlar</button>
         </div>
-
-        <div class="workspace">
-          <aside class="thumbs" id="thumbs"></aside>
+        <div id="editorPagesPane" role="tabpanel" aria-labelledby="editorPagesTab">
+          <div class="toolbar">
+            <button id="rotateBtn" disabled>90° döndür</button>
+            <button id="addPageBtn" disabled>Boş sayfa ekle</button>
+            <button id="deletePageBtn" disabled>Sayfayı sil</button>
+            <button id="finishEditBtn" class="finish-edit-btn" disabled>Düzenlemeyi tamamla</button>
+          </div>
+          <div class="workspace">
+            <aside class="thumbs" id="thumbs"></aside>
+          </div>
+        </div>
+        <div id="editorToolsPane" role="tabpanel" aria-labelledby="editorToolsTab" hidden>
+          <div class="editor-tool-heading">
+            <div>
+              <span class="eyebrow">PDF ARACI</span>
+              <h3>PDF'yi böl</h3>
+              <p>Yüklü belgenizi sayfa aralıklarına veya belirlediğiniz sayfa sayısına göre ayırın.</p>
+            </div>
+            <strong id="splitPageCount">PDF yüklenmedi</strong>
+          </div>
+          <p class="processing-notice processing-notice--server">
+            <strong>Sunucuda işlenir</strong>
+            Bölme işlemi için düzenlediğiniz PDF uygulama sunucusuna gönderilir ve işlem sonunda geçici çalışma alanından silinir.
+          </p>
+          <div class="editor-split-options">
+            <label>
+              Bölme yöntemi
+              <select id="splitMode">
+                <option value="ranges">Sayfa aralıklarına göre</option>
+                <option value="each">Her sayfayı ayrı PDF yap</option>
+                <option value="chunk">Her N sayfada böl</option>
+              </select>
+            </label>
+            <label id="splitChunkWrap" hidden>
+              Her bölümdeki sayfa sayısı
+              <input id="splitChunkSize" type="number" value="5" min="1">
+            </label>
+          </div>
+          <section id="splitWorkspace" class="split-workspace" aria-labelledby="splitWorkspaceTitle">
+            <div class="split-workspace-heading">
+              <div>
+                <span class="eyebrow">SAYFA SEÇİMİ</span>
+                <h3 id="splitWorkspaceTitle">Bölünecek aralıklar</h3>
+              </div>
+            </div>
+            <div id="splitPagePreview" class="split-page-preview" aria-label="PDF sayfaları"></div>
+            <div id="splitRangeControls" class="split-range-controls">
+              <div class="split-range-title">
+                <div><strong>Aralık modu</strong><span>Her aralık ayrı bir PDF oluşturur.</span></div>
+                <button id="addSplitRange" class="secondary" type="button" disabled>+ Aralık ekle</button>
+              </div>
+              <div id="splitRangeList" class="split-range-list"></div>
+            </div>
+            <p id="splitValidation" class="status error" role="status">Önce editöre bir PDF yükleyin.</p>
+          </section>
+          <button id="runEditorSplit" type="button" disabled>PDF'yi böl</button>
+          <p id="editorSplitStatus" class="status" role="status">PDF yüklemeniz bekleniyor.</p>
         </div>
       </section>
       </div>
@@ -504,6 +538,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="app.js"></script>
+    <script src="editor-split.js"></script>
     <script src="tools.js"></script>
     <script src="creators.js"></script>
     <script src="tool-navigation.js"></script>

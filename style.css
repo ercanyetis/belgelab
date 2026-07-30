@@ -566,10 +566,59 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border: 2px solid var(--accent);
   box-shadow: 0 24px 55px rgba(73, 54, 145, .13);
 }
-.quick-tool-panel--editor {
-  grid-column: 1 / -1;
+#editorPagesPane[hidden], #editorToolsPane[hidden] { display: none; }
+.editor-tabs {
+  display: flex;
+  gap: 8px;
+  margin: -4px 0 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.editor-tabs button {
+  color: #5b536d;
+  background: #eeeaf8;
+}
+.editor-tabs button.active {
+  color: #fff;
+  background: var(--accent);
+}
+.editor-tool-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.editor-tool-heading h3 { margin: 5px 0; font-size: 27px; }
+.editor-tool-heading p { margin: 0 0 18px; color: var(--muted); }
+.editor-tool-heading > strong {
+  padding: 8px 12px;
+  color: var(--accent);
+  background: #f5f2ff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.editor-split-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.editor-split-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #514b62;
+  font-weight: 700;
+}
+.editor-split-options label[hidden] { display: none; }
+.editor-split-options input, .editor-split-options select {
   width: 100%;
-  margin: 0;
+  min-height: 46px;
+  padding: 9px 12px;
+  color: #252039;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
 .document-creator {
   width: min(1100px, calc(100% - 32px));
@@ -648,6 +697,8 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border: 1px solid #d8d0f1;
   border-radius: 14px;
 }
+#editorToolsPane .split-workspace { grid-template-columns: 1fr; }
+#editorToolsPane .split-workspace-heading, #editorToolsPane .split-workspace > .status { grid-column: 1; }
 .split-workspace[hidden], .split-range-controls[hidden] { display: none; }
 .split-workspace-heading {
   display: flex;
@@ -719,6 +770,8 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .crop-selection[hidden] { display: none; }
 .crop-hint { margin: 11px 0 0; color: var(--muted); font-size: 13px; text-align: center; }
 @media (max-width: 800px) {
+  .editor-tool-heading { flex-direction: column; }
+  .editor-split-options { grid-template-columns: 1fr; }
   .crop-stage, .crop-stage canvas { max-height: 54vh; }
   .crop-workspace { padding: 11px; }
   .split-workspace { grid-template-columns: 1fr; padding: 12px; }

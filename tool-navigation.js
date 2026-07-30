@@ -1,7 +1,7 @@
 (() => {
   const registry = {
     "pdf-editor": { type: "editor" },
-    "pdf-split": { type: "quick", value: "split" },
+    "pdf-split": { type: "editor", value: "split" },
     "pdf-compress": { type: "quick", value: "compress" },
     "create-word": { type: "creator", value: "word" },
     "create-excel": { type: "creator", value: "excel" },
@@ -59,7 +59,7 @@
     if (entry.type === "quick") workspace = window.BelgeLabTools?.open(entry.value);
     else if (entry.type === "creator") workspace = window.BelgeLabCreators?.open(entry.value);
     else if (entry.type === "operation") workspace = window.BelgeLabApp?.openOperation(entry.value);
-    else if (entry.type === "editor") workspace = window.BelgeLabApp?.openEditor();
+    else if (entry.type === "editor") workspace = window.BelgeLabApp?.openEditor(entry.value);
     if (!workspace) return showToolsFallback();
     focusWorkspace(workspace);
     return true;
