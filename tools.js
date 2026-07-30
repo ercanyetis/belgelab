@@ -1,5 +1,8 @@
 (() => {
   const panel = document.getElementById("quickTool");
+  const panelHome = { parent: panel.parentNode, next: panel.nextSibling };
+  const editorWorkspace = document.querySelector(".app-shell");
+  const eyebrow = document.getElementById("quickToolEyebrow");
   const title = document.getElementById("quickToolTitle");
   const description = document.getElementById("quickToolDescription");
   const filesInput = document.getElementById("quickToolFiles");
@@ -22,6 +25,13 @@
   const cropPrevPage = document.getElementById("cropPrevPage");
   const cropNextPage = document.getElementById("cropNextPage");
   const cropReset = document.getElementById("cropReset");
+  const splitWorkspace = document.getElementById("splitWorkspace");
+  const splitPageCount = document.getElementById("splitPageCount");
+  const splitPagePreview = document.getElementById("splitPagePreview");
+  const splitRangeControls = document.getElementById("splitRangeControls");
+  const splitRangeList = document.getElementById("splitRangeList");
+  const splitValidation = document.getElementById("splitValidation");
+  const addSplitRange = document.getElementById("addSplitRange");
   const runButtonHome = document.getElementById("runQuickToolHome");
   let activeTool = null;
   let cropPdf = null;
@@ -31,11 +41,14 @@
   let cropDragMode = "draw";
   let cropStartArea = null;
   let isQuickToolRunning = false;
+  let splitTotalPages = 0;
+  let splitRanges = [];
   const connectionErrorMessage = "İnternet bağlantısı yok. Bu işlem için bağlantınızı kontrol edip yeniden deneyin.";
 
   const toolConfig = {
     split: {
       title: "PDF böl",
+      buttonLabel: "PDF'yi böl",
       accept: ".pdf",
       prompt: "Bölünecek PDF'i seçin",
       server: true,
@@ -52,10 +65,9 @@
         },
         {
           id: "ranges",
-          label: "Sayfa aralıkları",
-          type: "text",
-          value: "1-3,8-10",
-          visibleWhen: { field: "split_mode", value: "ranges" },
+          label: "Seçilen sayfa aralıkları",
+          type: "hidden",
+          value: "",
         },
         {
           id: "chunk_size",
@@ -134,7 +146,11 @@
         label.dataset.visibleWhenValue = field.visibleWhen.value;
       }
       let input;
-      if (field.type === "select") {
+      if (field.type === "hidden") {
+        input = document.createElement("input");
+        input.type = "hidden";
+        label.hidden = true;
+      } else if (field.type === "select") {
         input = document.createElement("select");
         field.options.forEach((item) => {
           const value = typeof item === "string" ? item : item.value;
@@ -162,6 +178,154 @@
     });
     syncConditionalFields();
   }
+
+  function splitMode() {
+    return options.querySelector('[data-option="split_mode"]')?.value || "ranges";
+  }
+
+  function splitRangeError() {
+    if (!splitTotalPages) return "Önce bölünecek PDF'i seçin.";
+    const mode = splitMode();
+    if (mode === "each") return "";
+    if (mode === "chunk") {
+      const chunkSize = Number(options.querySelector('[data-option="chunk_size"]')?.value);
+      return Number.isInteger(chunkSize) && chunkSize >= 1 && chunkSize <= splitTotalPages
+        ? ""
+        : `Bölüm boyutu 1 ile ${splitTotalPages} arasında olmalıdır.`;
+    }
+    const selected = new Set();
+    for (const range of splitRanges) {
+      if (!Number.isInteger(range.start) || !Number.isInteger(range.end) || range.start < 1 || range.end < range.start) {
+        return "Başlangıç ve bitiş sayfalarını geçerli bir aralık olarak girin.";
+      }
+      if (range.end > splitTotalPages) return `Aralıklar ${splitTotalPages}. sayfayı aşamaz.`;
+      for (let page = range.start; page <= range.end; page += 1) {
+        if (selected.has(page)) return `${page}. sayfa birden fazla aralıkta seçilemez.`;
+        selected.add(page);
+      }
+    }
+    return splitRanges.length ? "" : "En az bir sayfa aralığı ekleyin.";
+  }
+
+  function syncSplitWorkspace() {
+    const mode = splitMode();
+    splitRangeControls.hidden = mode !== "ranges";
+    const rangeValue = options.querySelector('[data-option="ranges"]');
+    if (rangeValue) {
+      rangeValue.value = splitRanges.map(({ start, end }) => start === end ? `${start}` : `${start}-${end}`).join(",");
+    }
+    const selectedPages = new Set();
+    if (mode !== "ranges") {
+      for (let page = 1; page <= splitTotalPages; page += 1) selectedPages.add(page);
+    } else {
+      splitRanges.forEach(({ start, end }) => {
+        for (let page = start; page <= end && page <= splitTotalPages; page += 1) selectedPages.add(page);
+      });
+    }
+    splitPagePreview.querySelectorAll("[data-split-page]").forEach((page) => {
+      page.classList.toggle("selected", selectedPages.has(Number(page.dataset.splitPage)));
+    });
+    const error = splitRangeError();
+    splitValidation.classList.toggle("error", Boolean(error));
+    if (error) splitValidation.textContent = error;
+    else if (mode === "each") splitValidation.textContent = `${splitTotalPages} sayfa, ${splitTotalPages} ayrı PDF olarak hazırlanacak.`;
+    else if (mode === "chunk") splitValidation.textContent = "PDF, seçtiğiniz sayfa sayısına göre sıralı bölümlere ayrılacak.";
+    else splitValidation.textContent = `${splitRanges.length} aralık ayrı PDF olarak hazırlanacak.`;
+    return error;
+  }
+
+  function renderSplitRanges() {
+    splitRangeList.innerHTML = "";
+    splitRanges.forEach((range, index) => {
+      const row = document.createElement("fieldset");
+      row.className = "split-range-row";
+      const legend = document.createElement("legend");
+      legend.textContent = `Aralık ${index + 1}`;
+      const startLabel = document.createElement("label");
+      startLabel.textContent = "Başlangıç";
+      const start = document.createElement("input");
+      start.type = "number";
+      start.min = "1";
+      start.max = String(splitTotalPages);
+      start.value = String(range.start);
+      start.setAttribute("aria-label", `Aralık ${index + 1} başlangıç sayfası`);
+      const endLabel = document.createElement("label");
+      endLabel.textContent = "Bitiş";
+      const end = document.createElement("input");
+      end.type = "number";
+      end.min = "1";
+      end.max = String(splitTotalPages);
+      end.value = String(range.end);
+      end.setAttribute("aria-label", `Aralık ${index + 1} bitiş sayfası`);
+      const remove = document.createElement("button");
+      remove.className = "secondary";
+      remove.type = "button";
+      remove.textContent = "Kaldır";
+      remove.disabled = splitRanges.length === 1;
+      const update = () => {
+        range.start = Number(start.value);
+        range.end = Number(end.value);
+        syncSplitWorkspace();
+      };
+      start.addEventListener("input", update);
+      end.addEventListener("input", update);
+      remove.addEventListener("click", () => {
+        splitRanges.splice(index, 1);
+        renderSplitRanges();
+      });
+      startLabel.appendChild(start);
+      endLabel.appendChild(end);
+      row.append(legend, startLabel, endLabel, remove);
+      splitRangeList.appendChild(row);
+    });
+    syncSplitWorkspace();
+  }
+
+  function resetSplitWorkspace() {
+    splitTotalPages = 0;
+    splitRanges = [];
+    splitPageCount.textContent = "PDF seçimi bekleniyor";
+    splitPagePreview.innerHTML = "";
+    splitRangeList.innerHTML = "";
+    addSplitRange.disabled = true;
+    splitValidation.textContent = "Önce bölünecek PDF'i seçin.";
+    splitValidation.classList.remove("error");
+  }
+
+  async function loadSplitPreview(file) {
+    setStatus("PDF sayfaları okunuyor...");
+    const source = await window.pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+    splitTotalPages = source.numPages;
+    await source.destroy();
+    splitRanges = [{ start: 1, end: 1 }];
+    splitPageCount.textContent = `${splitTotalPages} sayfa`;
+    splitPagePreview.innerHTML = "";
+    for (let page = 1; page <= splitTotalPages; page += 1) {
+      const chip = document.createElement("span");
+      chip.dataset.splitPage = String(page);
+      chip.textContent = String(page);
+      chip.setAttribute("aria-label", `Sayfa ${page}`);
+      splitPagePreview.appendChild(chip);
+    }
+    const chunkSize = options.querySelector('[data-option="chunk_size"]');
+    if (chunkSize) chunkSize.max = String(splitTotalPages);
+    addSplitRange.disabled = false;
+    renderSplitRanges();
+    setStatus(`${splitTotalPages} sayfa bulundu. Bölme yöntemini ve aralıkları belirleyin.`);
+  }
+
+  addSplitRange.addEventListener("click", () => {
+    if (!splitTotalPages) return;
+    const covered = new Set();
+    splitRanges.forEach(({ start, end }) => {
+      for (let page = start; page <= end; page += 1) covered.add(page);
+    });
+    const nextPage = Array.from({ length: splitTotalPages }, (_, index) => index + 1)
+      .find((page) => !covered.has(page)) || splitTotalPages;
+    splitRanges.push({ start: nextPage, end: nextPage });
+    renderSplitRanges();
+    splitRangeList.lastElementChild?.querySelector("input")?.focus();
+  });
 
   function updateCropSelection() {
     if (!cropArea) {
@@ -213,6 +377,16 @@
     const card = document.querySelector(`[data-pdf-tool="${toolName}"]`);
     if (!card) return null;
     activeTool = toolName;
+    const opensInEditor = activeTool === "split";
+    if (opensInEditor && editorWorkspace) {
+      editorWorkspace.prepend(panel);
+      panel.classList.add("quick-tool-panel--editor");
+      eyebrow.textContent = "BELGE DÜZENLEYİN";
+    } else {
+      panelHome.parent.insertBefore(panel, panelHome.next);
+      panel.classList.remove("quick-tool-panel--editor");
+      eyebrow.textContent = "HIZLI ARAÇ";
+    }
     title.textContent = config.title;
     description.textContent = card.querySelector("span:last-child").textContent;
     filesInput.accept = config.accept;
@@ -221,6 +395,7 @@
     secondInput.value = "";
     filePrompt.textContent = config.prompt;
     fileTypes.textContent = config.accept.replaceAll(".", "").toUpperCase();
+    runButton.textContent = config.buttonLabel || "İşlemi başlat";
     secondWrap.hidden = !config.second;
     renderFields(config.fields);
     processingNotice.className = `processing-notice ${config.server ? "processing-notice--server" : "processing-notice--local"}`;
@@ -228,6 +403,13 @@
       ? "<strong>Sunucuda işlenir</strong> Seçtiğiniz dosya bu işlem için uygulama sunucusuna gönderilir ve işlem sonunda geçici çalışma alanından silinir."
       : "<strong>Cihazınızda işlenir</strong> Seçtiğiniz dosya bu işlem sırasında sunucuya gönderilmez.";
     cropWorkspace.hidden = activeTool !== "crop";
+    splitWorkspace.hidden = activeTool !== "split";
+    if (activeTool === "split") {
+      resetSplitWorkspace();
+      options.querySelector('[data-option="split_mode"]')?.addEventListener("change", syncSplitWorkspace);
+      options.querySelector('[data-option="chunk_size"]')?.addEventListener("input", syncSplitWorkspace);
+      syncSplitWorkspace();
+    }
     if (activeTool === "crop") cropReset.after(runButton);
     else runButtonHome.after(runButton);
     cropArea = null;
@@ -240,8 +422,12 @@
 
   function close() {
     panel.hidden = true;
+    panelHome.parent.insertBefore(panel, panelHome.next);
+    panel.classList.remove("quick-tool-panel--editor");
+    eyebrow.textContent = "HIZLI ARAÇ";
     activeTool = null;
     cropWorkspace.hidden = true;
+    splitWorkspace.hidden = true;
   }
 
   window.BelgeLabTools = { ...window.BelgeLabTools, open, close };
@@ -257,6 +443,19 @@
 
   filesInput.addEventListener("change", async () => {
     const count = filesInput.files.length;
+    if (activeTool === "split") {
+      resetSplitWorkspace();
+      if (!filesInput.files[0]) {
+        setStatus("Dosya seçimi bekleniyor.");
+        return;
+      }
+      try {
+        await loadSplitPreview(filesInput.files[0]);
+      } catch (error) {
+        setStatus(`PDF sayfaları okunamadı: ${error.message}`, true);
+      }
+      return;
+    }
     if (activeTool === "crop" && filesInput.files[0]) {
       try {
         await loadCropPreview(filesInput.files[0]);
@@ -517,6 +716,10 @@
     if (!config || !files.length) return setStatus("Önce uygun bir dosya seçin.", true);
     if (config.second && !secondInput.files[0]) return setStatus("İkinci PDF dosyasını da seçin.", true);
     if (activeTool === "crop" && !cropArea) return setStatus("Önizleme üzerinde kırpılacak alanı seçin.", true);
+    if (activeTool === "split") {
+      const error = syncSplitWorkspace();
+      if (error) return setStatus(error, true);
+    }
     setQuickToolBusy(true);
     setStatus("İşlem hazırlanıyor...");
     try {

@@ -1,4 +1,4 @@
-const CACHE_NAME = "belgelab-cache-v36";
+const CACHE_NAME = "belgelab-cache-v38";
 const OFFLINE_URL = "/offline.html";
 const STATIC_ASSETS = [
   OFFLINE_URL,

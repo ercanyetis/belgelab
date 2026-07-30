@@ -290,7 +290,7 @@
       <section class="panel quick-tool-panel" id="quickTool" hidden>
         <div class="quick-tool-heading">
           <div>
-            <span class="eyebrow">HIZLI ARAÇ</span>
+            <span id="quickToolEyebrow" class="eyebrow">HIZLI ARAÇ</span>
             <h2 id="quickToolTitle">PDF aracı</h2>
             <p id="quickToolDescription"></p>
           </div>
@@ -310,6 +310,24 @@
           <input id="quickSecondFile" type="file" accept="application/pdf" hidden>
         </div>
         <div id="quickOptions" class="quick-options"></div>
+        <section id="splitWorkspace" class="split-workspace" aria-labelledby="splitWorkspaceTitle" hidden>
+          <div class="split-workspace-heading">
+            <div>
+              <span class="eyebrow">SAYFA SEÇİMİ</span>
+              <h3 id="splitWorkspaceTitle">PDF'yi böl</h3>
+            </div>
+            <strong id="splitPageCount">PDF seçimi bekleniyor</strong>
+          </div>
+          <div id="splitPagePreview" class="split-page-preview" aria-label="PDF sayfaları"></div>
+          <div id="splitRangeControls" class="split-range-controls">
+            <div class="split-range-title">
+              <div><strong>Aralık modu</strong><span>Her aralık ayrı bir PDF oluşturur.</span></div>
+              <button id="addSplitRange" class="secondary" type="button">+ Aralık ekle</button>
+            </div>
+            <div id="splitRangeList" class="split-range-list"></div>
+          </div>
+          <p id="splitValidation" class="status" role="status">Önce bölünecek PDF'i seçin.</p>
+        </section>
         <div id="cropWorkspace" class="crop-workspace" hidden>
           <div class="crop-toolbar">
             <strong>Kırpılacak alanı seçin</strong>
