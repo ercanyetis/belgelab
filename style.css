@@ -25,6 +25,7 @@ button, a, label, select { -webkit-tap-highlight-color: transparent; }
   align-items: center;
   gap: 12px;
   min-height: 72px;
+  overflow-x: clip;
   padding: 10px clamp(18px, 3vw, 72px);
   background: rgba(255, 255, 255, 0.94);
   border-bottom: 1px solid #ececf1;
@@ -328,6 +329,18 @@ button, a, label, select { -webkit-tap-highlight-color: transparent; }
   transform: translateY(-2px);
 }
 .dropzone:active, .converter-dropzone:active { transform: translateY(0); }
+
+.file-selection { margin-top: 12px; padding: 10px; background: #f7f5fc; border: 1px solid var(--border); border-radius: 12px; }
+.file-selection[hidden] { display: none; }
+.file-selection ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.file-selection li { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.file-selection li > span:first-child { display: flex; min-width: 0; flex-direction: column; }
+.file-selection li strong { overflow: hidden; color: #332b49; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.file-selection li small { color: var(--muted); }
+.file-selection li > span:last-child { display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 6px; }
+.file-selection button { padding: 7px 10px !important; font-size: 12px; }
+.file-selection-clear { margin-top: 10px; }
+.danger-action { color: #ffd9de !important; background: #713744 !important; }
 
 .button-row, .toolbar, .converter-controls {
   display: flex;
@@ -815,6 +828,8 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   }
 }
 @media (max-width: 520px) {
+  .file-selection li { align-items: stretch; flex-direction: column; }
+  .file-selection li > span:last-child button { flex: 1; }
   .hero { padding-top: 38px; }
   .tool-grid { grid-template-columns: 1fr; }
   .tool-card { min-height: 0; padding: 20px; border-radius: 10px 22px 22px 22px; }

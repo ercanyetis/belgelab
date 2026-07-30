@@ -302,12 +302,14 @@
           <span id="quickFileTypes">PDF</span>
         </label>
         <input id="quickToolFiles" type="file" hidden>
+        <div id="quickFileSelection" class="file-selection" hidden></div>
         <div id="quickSecondFileWrap" hidden>
           <label class="converter-dropzone quick-file-label" for="quickSecondFile">
             <strong>Karşılaştırılacak ikinci PDF'i seçin</strong>
             <span>PDF</span>
           </label>
           <input id="quickSecondFile" type="file" accept="application/pdf" hidden>
+          <div id="quickSecondFileSelection" class="file-selection" hidden></div>
         </div>
         <div id="quickOptions" class="quick-options"></div>
         <div id="cropWorkspace" class="crop-workspace" hidden>
@@ -328,7 +330,7 @@
           <p class="crop-hint">Yalnızca görüntülenen sayfanın seçtiğiniz alanı kırpılarak yeni PDF'e kaydedilir.</p>
         </div>
         <span id="runQuickToolHome"></span>
-        <button id="runQuickTool" type="button">İşlemi başlat</button>
+        <button id="runQuickTool" type="button" disabled>İşlemi başlat</button>
         <p id="quickToolStatus" class="status">Dosya seçimi bekleniyor.</p>
       </section>
 
@@ -349,9 +351,11 @@
           <span>Dosyalar seçtiğiniz sırayla birleştirilir</span>
         </label>
         <input id="fileInput" type="file" accept="application/pdf" multiple hidden />
+        <div id="editorFileSelection" class="file-selection" hidden></div>
 
         <div class="button-row">
           <button id="mergeTrigger" class="secondary">Belgeye başka PDF ekle</button>
+          <button id="clearEditorFiles" class="secondary danger-action" type="button" disabled>Seçimi temizle</button>
           <input id="mergeInput" type="file" accept="application/pdf" hidden />
         </div>
         <div class="button-row">
@@ -441,8 +445,9 @@
           accept=".pdf,.docx,.xlsx,.pptx,.dwg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/acad,application/x-acad,application/autocad_dwg"
           hidden
         />
+        <div id="conversionFileSelection" class="file-selection" hidden></div>
 
-        <button id="convertBtn" class="secondary">Dönüştür</button>
+        <button id="convertBtn" class="secondary" disabled>Dönüştür</button>
       </div>
 
       <p id="conversionStatus" class="status">Henüz dönüştürme yapılmadı.</p>
@@ -485,10 +490,10 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="app.js?v=47"></script>
-    <script src="tools.js?v=47"></script>
+    <script src="app.js?v=48"></script>
+    <script src="tools.js?v=48"></script>
     <script src="creators.js?v=47"></script>
-    <script src="tool-navigation.js?v=47"></script>
+    <script src="tool-navigation.js?v=48"></script>
     <script src="/consent.js"></script>
     <script src="/ads.js"></script>
   </body>

@@ -5,6 +5,8 @@
   const filesInput = document.getElementById("quickToolFiles");
   const secondInput = document.getElementById("quickSecondFile");
   const secondWrap = document.getElementById("quickSecondFileWrap");
+  const fileSelection = document.getElementById("quickFileSelection");
+  const secondFileSelection = document.getElementById("quickSecondFileSelection");
   const filePrompt = document.getElementById("quickFilePrompt");
   const fileTypes = document.getElementById("quickFileTypes");
   const options = document.getElementById("quickOptions");
@@ -103,10 +105,12 @@
 
   function setQuickToolBusy(busy, stage = "İşlem hazırlanıyor...") {
     isQuickToolRunning = busy;
-    runButton.disabled = busy;
+    const config = toolConfig[activeTool];
+    runButton.disabled = busy || !filesInput.files.length || Boolean(config?.second && !secondInput.files.length);
     closeButton.disabled = busy;
     filesInput.disabled = busy;
     secondInput.disabled = busy;
+    panel.querySelectorAll(".file-selection button").forEach((control) => { control.disabled = busy; });
     options.querySelectorAll("input, select, button").forEach((control) => {
       control.disabled = busy;
     });
@@ -207,6 +211,61 @@
     };
   }
 
+  async function resetCropState() {
+    const previousCropPdf = cropPdf;
+    cropPdf = null;
+    if (previousCropPdf) await previousCropPdf.destroy().catch(() => {});
+    cropPage = 1;
+    cropArea = null;
+    cropDragStart = null;
+    cropStartArea = null;
+    cropCanvas.width = 0;
+    cropCanvas.height = 0;
+    cropPageLabel.textContent = "Sayfa 1 / 1";
+    updateCropSelection();
+  }
+
+  function renderQuickFileSelections() {
+    const files = [...filesInput.files];
+    window.BelgeLabFiles.renderFileSelection(fileSelection, files, {
+      replaceInput: files.length === 1 ? filesInput : null,
+      onRemove: async (index) => {
+        window.BelgeLabFiles.replaceInputFiles(filesInput, files.filter((_, fileIndex) => fileIndex !== index));
+        if (!filesInput.files.length) {
+          await resetSelection();
+          return;
+        }
+        renderQuickFileSelections();
+        setStatus(filesInput.files.length + " dosya seçildi.");
+      },
+      onClear: async () => {
+        await resetSelection();
+      },
+      showClear: filesInput.multiple,
+    });
+    const secondFiles = [...secondInput.files];
+    window.BelgeLabFiles.renderFileSelection(secondFileSelection, secondFiles, {
+      replaceInput: secondFiles.length ? secondInput : null,
+      onRemove: () => {
+        secondInput.value = "";
+        renderQuickFileSelections();
+        setStatus("Karşılaştırılacak ikinci PDF seçimi kaldırıldı.");
+      },
+    });
+    const config = toolConfig[activeTool];
+    runButton.disabled = isQuickToolRunning || !files.length || Boolean(config?.second && !secondFiles.length);
+  }
+
+  async function resetSelection(toolName = activeTool) {
+    if (toolName && activeTool !== toolName) return;
+    filesInput.value = "";
+    secondInput.value = "";
+    if (activeTool) renderFields(toolConfig[activeTool]?.fields);
+    await resetCropState();
+    renderQuickFileSelections();
+    setStatus(activeTool === "split" ? "PDF yüklenmedi." : "Dosya seçimi bekleniyor.");
+  }
+
   function open(toolName) {
     const config = toolConfig[toolName];
     if (!config) return null;
@@ -232,19 +291,21 @@
     else runButtonHome.after(runButton);
     cropArea = null;
     updateCropSelection();
-    setStatus("Dosya seçimi bekleniyor.");
+    renderQuickFileSelections();
+    setStatus(activeTool === "split" ? "PDF yüklenmedi." : "Dosya seçimi bekleniyor.");
     panel.hidden = false;
     panel.scrollIntoView({ behavior: "smooth", block: "center" });
     return panel;
   }
 
   function close() {
+    resetSelection();
     panel.hidden = true;
     activeTool = null;
     cropWorkspace.hidden = true;
   }
 
-  window.BelgeLabTools = { ...window.BelgeLabTools, open, close };
+  window.BelgeLabTools = { ...window.BelgeLabTools, open, close, resetSelection };
 
   document.querySelectorAll("[data-pdf-tool]").forEach((card) => {
     card.addEventListener("click", () => {
@@ -257,6 +318,7 @@
 
   filesInput.addEventListener("change", async () => {
     const count = filesInput.files.length;
+    renderQuickFileSelections();
     if (activeTool === "crop" && filesInput.files[0]) {
       try {
         await loadCropPreview(filesInput.files[0]);
@@ -266,6 +328,11 @@
       return;
     }
     setStatus(count ? `${count} dosya seçildi. İşlemi başlatabilirsiniz.` : "Dosya seçimi bekleniyor.");
+  });
+
+  secondInput.addEventListener("change", () => {
+    renderQuickFileSelections();
+    setStatus(secondInput.files.length ? "İkinci PDF seçildi. İşlemi başlatabilirsiniz." : "İkinci PDF seçimi bekleniyor.");
   });
 
   cropStage.addEventListener("pointerdown", (event) => {

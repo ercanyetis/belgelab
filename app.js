@@ -1,5 +1,7 @@
 const fileInput = document.getElementById("fileInput");
 const mergeInput = document.getElementById("mergeInput");
+const editorFileSelection = document.getElementById("editorFileSelection");
+const clearEditorFiles = document.getElementById("clearEditorFiles");
 const dropzone = document.getElementById("dropzone");
 const thumbs = document.getElementById("thumbs");
 const status = document.getElementById("status");
@@ -25,6 +27,7 @@ const conversionStatus = document.getElementById("conversionStatus");
 const conversionDropzone = document.getElementById("conversionDropzone");
 const conversionFileName = document.getElementById("conversionFileName");
 const conversionFileHint = document.getElementById("conversionFileHint");
+const conversionFileSelection = document.getElementById("conversionFileSelection");
 const pdfWordModeWrap = document.getElementById("pdfWordModeWrap");
 const pdfWordMode = document.getElementById("pdfWordMode");
 const installBtn = document.getElementById("installBtn");
@@ -34,6 +37,63 @@ const categoryButtons = document.querySelectorAll(".category-pill");
 const toolCards = document.querySelectorAll(".tool-card");
 const serverPdfTools = new Set(["unlock", "protect", "repair", "compare"]);
 const connectionErrorMessage = "İnternet bağlantısı yok. Bu işlem için bağlantınızı kontrol edip yeniden deneyin.";
+
+function replaceInputFiles(input, files) {
+  const transfer = new DataTransfer();
+  files.forEach((file) => transfer.items.add(file));
+  input.files = transfer.files;
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + " KB";
+  return (bytes / 1024 / 1024).toFixed(2) + " MB";
+}
+
+function renderFileSelection(container, files, { onRemove, onClear, replaceInput, showClear = false } = {}) {
+  container.replaceChildren();
+  container.hidden = !files.length;
+  if (!files.length) return;
+  const list = document.createElement("ul");
+  files.forEach((file, index) => {
+    const item = document.createElement("li");
+    const details = document.createElement("span");
+    const name = document.createElement("strong");
+    const size = document.createElement("small");
+    name.textContent = file.name;
+    size.textContent = formatFileSize(file.size);
+    details.append(name, size);
+    const actions = document.createElement("span");
+    if (replaceInput) {
+      const replace = document.createElement("button");
+      replace.type = "button";
+      replace.className = "secondary";
+      replace.textContent = "Başka dosya seç";
+      replace.setAttribute("aria-label", file.name + " yerine başka dosya seç");
+      replace.addEventListener("click", () => replaceInput.click());
+      actions.appendChild(replace);
+    }
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "secondary danger-action";
+    remove.textContent = "Kaldır";
+    remove.setAttribute("aria-label", file.name + " dosyasını kaldır");
+    remove.addEventListener("click", () => onRemove(index));
+    actions.appendChild(remove);
+    item.append(details, actions);
+    list.appendChild(item);
+  });
+  container.appendChild(list);
+  if (onClear && (files.length > 1 || showClear)) {
+    const clear = document.createElement("button");
+    clear.type = "button";
+    clear.className = "secondary danger-action file-selection-clear";
+    clear.textContent = "Tüm seçimi temizle";
+    clear.addEventListener("click", onClear);
+    container.appendChild(clear);
+  }
+}
+
+window.BelgeLabFiles = { replaceInputFiles, renderFileSelection };
 
 toolCards.forEach((card) => {
   const isServerTool = Boolean(card.dataset.operation || card.dataset.createTool)
@@ -50,6 +110,8 @@ const copyrightYear = document.getElementById("copyrightYear");
 let pdfDoc = null;
 let currentPageIndex = 0;
 let lastBytes = null;
+let editorFiles = [];
+let editorHasChanges = false;
 let selectedConversionFile = null;
 let isConversionRunning = false;
 let deferredPrompt = null;
@@ -90,6 +152,51 @@ function enableControls(enabled) {
   aggressiveBtn.disabled = !enabled;
   finishEditBtn.disabled = !enabled;
 }
+
+function resetEditorDocument(message = "Henüz dosya yüklenmedi.", syncQuickTool = true) {
+  if (completedPreviewUrl) URL.revokeObjectURL(completedPreviewUrl);
+  completedPreviewUrl = null;
+  completedPdfBlob = null;
+  pdfDoc = null;
+  lastBytes = null;
+  currentPageIndex = 0;
+  editorFiles = [];
+  editorHasChanges = false;
+  thumbnailRenderVersion += 1;
+  thumbs.replaceChildren();
+  fileInput.value = "";
+  mergeInput.value = "";
+  clearEditorFiles.disabled = true;
+  renderFileSelection(editorFileSelection, [], {});
+  enableControls(false);
+  completionToast.hidden = true;
+  renderPreview();
+  setStatus(message);
+  if (syncQuickTool) window.BelgeLabTools?.resetSelection("split");
+}
+
+function confirmEditorReset() {
+  return !editorHasChanges || window.confirm("Belgede yaptığınız sayfa değişiklikleri kaybolacak. Devam edilsin mi?");
+}
+
+function renderEditorFiles() {
+  clearEditorFiles.disabled = !editorFiles.length;
+  renderFileSelection(editorFileSelection, editorFiles, {
+    onRemove: async (index) => {
+      if (!confirmEditorReset()) return;
+      const remaining = editorFiles.filter((_, fileIndex) => fileIndex !== index);
+      resetEditorDocument("Seçili PDF kaldırıldı.", !remaining.length);
+      if (remaining.length) await loadPdfFiles(remaining, false, true);
+    },
+    onClear: () => {
+      if (confirmEditorReset()) resetEditorDocument("Tüm PDF seçimi temizlendi.");
+    },
+  });
+}
+
+clearEditorFiles.addEventListener("click", () => {
+  if (confirmEditorReset()) resetEditorDocument("Tüm PDF seçimi temizlendi.");
+});
 
 async function renderPageList() {
   const version = ++thumbnailRenderVersion;
@@ -148,6 +255,7 @@ async function renderPageList() {
         currentPageIndex = Math.min(currentPageIndex, pdfDoc.getPageCount() - 1);
         await refreshDocument();
         setStatus(`Sayfa ${index + 1} silindi.`);
+        editorHasChanges = true;
       } else {
         const page = pdfDoc.getPage(index);
         const delta = action === "right" ? 90 : 270;
@@ -155,6 +263,7 @@ async function renderPageList() {
         currentPageIndex = index;
         await refreshDocument();
         setStatus(`Sayfa ${index + 1} döndürüldü.`);
+        editorHasChanges = true;
       }
     });
     card.addEventListener("dragstart", (event) => {
@@ -176,6 +285,7 @@ async function renderPageList() {
       const toIndex = index;
       if (Number.isInteger(fromIndex) && fromIndex !== toIndex) {
         await movePage(fromIndex, toIndex);
+        editorHasChanges = true;
       }
     });
     thumbs.appendChild(card);
@@ -266,7 +376,7 @@ async function refreshDocument() {
   renderPreview();
 }
 
-async function loadPdfFiles(files, append = false) {
+async function loadPdfFiles(files, append = false, trackFiles = true) {
   const selectedFiles = [...files];
   if (!selectedFiles.length) return;
   if (selectedFiles.some((file) => file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf"))) {
@@ -285,6 +395,9 @@ async function loadPdfFiles(files, append = false) {
     pdfDoc = combined;
     currentPageIndex = append ? Math.max(0, pdfDoc.getPageCount() - 1) : 0;
     lastBytes = (await pdfDoc.save()).slice();
+    if (trackFiles) editorFiles = append ? [...editorFiles, ...selectedFiles] : selectedFiles;
+    if (!append) editorHasChanges = false;
+    renderEditorFiles();
     enableControls(true);
     renderPageList();
     setStatus(`${selectedFiles.length} PDF eklendi. Çalışma alanında ${pdfDoc.getPageCount()} sayfa var.`);
@@ -334,6 +447,7 @@ rotateBtn.addEventListener("click", async () => {
   page.setRotation(window.PDFLib.degrees((currentRotation + 90) % 360));
   await refreshDocument();
   setStatus("Sayfa döndürüldü.");
+  editorHasChanges = true;
 });
 
 addPageBtn.addEventListener("click", async () => {
@@ -343,6 +457,7 @@ addPageBtn.addEventListener("click", async () => {
   pdfDoc.addPage([595.28, 841.89]);
   await refreshDocument();
   setStatus("Boş sayfa eklendi.");
+  editorHasChanges = true;
 });
 
 deletePageBtn.addEventListener("click", async () => {
@@ -353,6 +468,7 @@ deletePageBtn.addEventListener("click", async () => {
   currentPageIndex = Math.min(currentPageIndex, pdfDoc.getPageCount() - 1);
   await refreshDocument();
   setStatus("Sayfa silindi.");
+  editorHasChanges = true;
 });
 
 downloadBtn.addEventListener("click", async () => {
@@ -422,22 +538,7 @@ continueEditing.addEventListener("click", () => {
 });
 
 startNewDocument.addEventListener("click", () => {
-  if (completedPreviewUrl) {
-    URL.revokeObjectURL(completedPreviewUrl);
-    completedPreviewUrl = null;
-  }
-  pdfDoc = null;
-  lastBytes = null;
-  completedPdfBlob = null;
-  currentPageIndex = 0;
-  thumbnailRenderVersion += 1;
-  thumbs.innerHTML = "";
-  fileInput.value = "";
-  mergeInput.value = "";
-  enableControls(false);
-  completionToast.hidden = true;
-  renderPreview();
-  setStatus("Yeni belge için PDF dosyalarınızı ekleyin.");
+  resetEditorDocument("Yeni belge için PDF dosyalarınızı ekleyin.");
   dropzone.scrollIntoView({ behavior: "smooth", block: "center" });
 });
 
@@ -567,6 +668,8 @@ mergeInput.addEventListener("change", async (event) => {
     copiedPages.forEach((page) => pdfDoc.addPage(page));
     await refreshDocument();
     setStatus(`${file.name} belgeye eklendi.`);
+    editorFiles.push(file);
+    renderEditorFiles();
   } catch (error) {
     setStatus(`PDF birleştirilemedi: ${error.message}`);
   } finally {
@@ -576,6 +679,15 @@ mergeInput.addEventListener("change", async (event) => {
 
 function setConversionStatus(message) {
   conversionStatus.textContent = message;
+}
+
+function clearConversionSelection(message = "Dosya seçimi temizlendi.") {
+  selectedConversionFile = null;
+  conversionInput.value = "";
+  convertBtn.disabled = true;
+  resetConversionFileDisplay();
+  renderFileSelection(conversionFileSelection, [], {});
+  setConversionStatus(message);
 }
 
 function resetConversionFileDisplay() {
@@ -588,6 +700,10 @@ function showSelectedConversionFile(file) {
   conversionDropzone.classList.add("has-file");
   conversionFileName.textContent = file.name;
   conversionFileHint.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB • Dosya seçildi`;
+  renderFileSelection(conversionFileSelection, [file], {
+    replaceInput: conversionInput,
+    onRemove: () => clearConversionSelection(),
+  });
 }
 
 function registerServiceWorker() {
@@ -605,6 +721,7 @@ function setConversionBusy(busy, stage = "İşlem başlatılıyor...") {
   pdfWordMode.disabled = busy;
   convertBtn.disabled = busy || !selectedConversionFile;
   conversionDropzone.classList.toggle("is-locked", busy);
+  conversionFileSelection.querySelectorAll("button").forEach((button) => { button.disabled = busy; });
   conversionDropzone.setAttribute("aria-disabled", String(busy));
   if (busy) {
     loadingStage.textContent = stage;
@@ -676,11 +793,7 @@ conversionInput.addEventListener("change", (event) => {
   const rule = conversionRules[conversionType.value];
   const extension = `.${file.name.split(".").pop().toLowerCase()}`;
   if (!rule.extensions.includes(extension)) {
-    selectedConversionFile = null;
-    conversionInput.value = "";
-    convertBtn.disabled = true;
-    resetConversionFileDisplay();
-    setConversionStatus(`Bu işlem için ${rule.extensions.join(" veya ")} uzantılı bir dosya seçin.`);
+    clearConversionSelection("Bu işlem için " + rule.extensions.join(" veya ") + " uzantılı bir dosya seçin.");
     return;
   }
   selectedConversionFile = file;
@@ -692,10 +805,7 @@ conversionInput.addEventListener("change", (event) => {
 conversionType.addEventListener("change", () => {
   const rule = conversionRules[conversionType.value];
   conversionInput.accept = rule.accept;
-  conversionInput.value = "";
-  selectedConversionFile = null;
-  convertBtn.disabled = true;
-  resetConversionFileDisplay();
+  clearConversionSelection();
   pdfWordModeWrap.hidden = conversionType.value !== "pdf-to-docx";
   setConversionStatus(`Bu işlem için ${rule.extensions.join(" veya ")} dosyası seçin.`);
 });
@@ -735,11 +845,7 @@ convertBtn.addEventListener("click", async () => {
   try {
     loadingStage.textContent = "Belge işleniyor ve çıktı hazırlanıyor...";
     await callConversionApi(selectedConversionFile, operation);
-    setConversionStatus("Dönüştürme tamamlandı.");
-    selectedConversionFile = null;
-    conversionInput.value = "";
-    convertBtn.disabled = true;
-    resetConversionFileDisplay();
+    clearConversionSelection("Dönüştürme tamamlandı.");
   } catch (error) {
     const message = !navigator.onLine || error instanceof TypeError
       ? connectionErrorMessage
