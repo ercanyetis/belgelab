@@ -259,6 +259,7 @@ async function refreshDocument() {
 
   const updatedBytes = await pdfDoc.save();
   lastBytes = updatedBytes.slice();
+  document.dispatchEvent(new CustomEvent("belgelab:pdf-editor-updated"));
   renderPageList();
   if (currentPageIndex >= pdfDoc.getPageCount()) {
     currentPageIndex = Math.max(0, pdfDoc.getPageCount() - 1);
@@ -285,6 +286,9 @@ async function loadPdfFiles(files, append = false) {
     pdfDoc = combined;
     currentPageIndex = append ? Math.max(0, pdfDoc.getPageCount() - 1) : 0;
     lastBytes = (await pdfDoc.save()).slice();
+    document.dispatchEvent(new CustomEvent("belgelab:pdf-editor-updated", {
+      detail: { filename: append ? null : selectedFiles[0]?.name || null },
+    }));
     enableControls(true);
     renderPageList();
     setStatus(`${selectedFiles.length} PDF eklendi. Çalışma alanında ${pdfDoc.getPageCount()} sayfa var.`);
@@ -428,6 +432,7 @@ startNewDocument.addEventListener("click", () => {
   }
   pdfDoc = null;
   lastBytes = null;
+  document.dispatchEvent(new CustomEvent("belgelab:pdf-editor-updated"));
   completedPdfBlob = null;
   currentPageIndex = 0;
   thumbnailRenderVersion += 1;

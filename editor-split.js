@@ -20,7 +20,6 @@
   const addRange = document.getElementById("addSplitRange");
   const runButton = document.getElementById("runEditorSplit");
   const splitStatus = document.getElementById("editorSplitStatus");
-  const editorThumbs = document.getElementById("thumbs");
   const splitCard = document.querySelector('[data-editor-tool="split"]');
   const connectionMessage = "İnternet bağlantısı yok. Bu işlem için bağlantınızı kontrol edip yeniden deneyin.";
   const descriptions = {
@@ -276,11 +275,10 @@
     }
   });
 
-  document.getElementById("fileInput").addEventListener("change", (event) => {
-    const firstFile = event.target.files?.[0];
-    if (firstFile && !pdfDoc) sourceFilename = firstFile.name;
+  document.addEventListener("belgelab:pdf-editor-updated", (event) => {
+    if (event.detail?.filename) sourceFilename = event.detail.filename;
+    syncWorkspace();
   });
-  new MutationObserver(syncWorkspace).observe(editorThumbs, { childList: true });
 
   const originalOpenEditor = window.BelgeLabApp.openEditor;
   window.BelgeLabApp.openEditor = (toolName) => {
