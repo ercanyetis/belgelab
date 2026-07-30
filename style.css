@@ -633,72 +633,6 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border: 1px solid var(--border);
   border-radius: 10px;
 }
-.split-workspace {
-  display: grid;
-  grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr);
-  gap: 18px;
-  margin: 18px 0;
-  padding: 18px;
-  background: #f5f2ff;
-  border: 1px solid #d8d0f1;
-  border-radius: 14px;
-}
-.split-workspace[hidden], .split-range-controls[hidden] { display: none; }
-.split-workspace-heading {
-  display: flex;
-  grid-column: 1 / -1;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-.split-workspace-heading h3 { margin: 4px 0 0; font-size: 25px; }
-.split-workspace-heading > strong { padding: 8px 12px; color: var(--accent); background: #fff; border: 1px solid var(--border); border-radius: 999px; white-space: nowrap; }
-.split-page-preview {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-  align-content: start;
-  gap: 8px;
-  max-height: 330px;
-  padding: 12px;
-  overflow-y: auto;
-  background: #e9e5f5;
-  border-radius: 12px;
-}
-.split-page-preview:empty::before { content: "PDF sayfaları burada görünecek."; grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
-.split-page-preview span {
-  display: grid;
-  min-height: 66px;
-  color: #5e586c;
-  background: #fff;
-  border: 2px solid transparent;
-  border-radius: 7px;
-  box-shadow: 0 3px 9px rgba(43, 35, 68, .09);
-  font-size: 13px;
-  font-weight: 800;
-  place-items: center;
-}
-.split-page-preview span.selected { color: var(--accent); border-color: var(--accent); background: #f8f6ff; }
-.split-range-controls { min-width: 0; }
-.split-range-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-.split-range-title > div { display: flex; flex-direction: column; gap: 3px; }
-.split-range-title span { color: var(--muted); font-size: 13px; }
-.split-range-list { display: grid; gap: 10px; }
-.split-range-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
-  align-items: end;
-  gap: 10px;
-  min-width: 0;
-  margin: 0;
-  padding: 12px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-}
-.split-range-row legend { padding: 0 5px; color: var(--accent); font-size: 13px; font-weight: 850; }
-.split-range-row label { display: flex; min-width: 0; flex-direction: column; gap: 5px; color: #514b62; font-size: 12px; font-weight: 750; }
-.split-range-row input { width: 100%; min-width: 0; min-height: 42px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; }
-.split-workspace > .status { grid-column: 1 / -1; margin: 0; }
 .status.error { color: #b52f3e; }
 .crop-workspace { margin: 18px 0; padding: 16px; background: #f5f2ff; border: 1px solid #d8d0f1; border-radius: 14px; }
 .crop-workspace[hidden] { display: none; }
@@ -716,15 +650,6 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 800px) {
   .crop-stage, .crop-stage canvas { max-height: 54vh; }
   .crop-workspace { padding: 11px; }
-  .split-workspace { grid-template-columns: 1fr; padding: 12px; }
-  .split-workspace-heading, .split-workspace > .status { grid-column: 1; }
-  .split-page-preview { max-height: 230px; }
-}
-@media (max-width: 520px) {
-  .split-workspace-heading, .split-range-title { align-items: stretch; flex-direction: column; }
-  .split-workspace-heading > strong { width: fit-content; }
-  .split-range-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .split-range-row button { grid-column: 1 / -1; }
 }
 
 .site-footer {
