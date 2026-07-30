@@ -1,7 +1,6 @@
 (() => {
   const panel = document.getElementById("quickTool");
   const panelHome = { parent: panel.parentNode, next: panel.nextSibling };
-  const editorWorkspace = document.querySelector(".app-shell");
   const eyebrow = document.getElementById("quickToolEyebrow");
   const title = document.getElementById("quickToolTitle");
   const description = document.getElementById("quickToolDescription");
@@ -377,16 +376,9 @@
     const card = document.querySelector(`[data-pdf-tool="${toolName}"]`);
     if (!card) return null;
     activeTool = toolName;
-    const opensInEditor = activeTool === "split";
-    if (opensInEditor && editorWorkspace) {
-      editorWorkspace.prepend(panel);
-      panel.classList.add("quick-tool-panel--editor");
-      eyebrow.textContent = "BELGE DÜZENLEYİN";
-    } else {
-      panelHome.parent.insertBefore(panel, panelHome.next);
-      panel.classList.remove("quick-tool-panel--editor");
-      eyebrow.textContent = "HIZLI ARAÇ";
-    }
+    panelHome.parent.insertBefore(panel, panelHome.next);
+    panel.classList.remove("quick-tool-panel--editor");
+    eyebrow.textContent = "HIZLI ARAÇ";
     title.textContent = config.title;
     description.textContent = card.querySelector("span:last-child").textContent;
     filesInput.accept = config.accept;

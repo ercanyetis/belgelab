@@ -566,11 +566,6 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border: 2px solid var(--accent);
   box-shadow: 0 24px 55px rgba(73, 54, 145, .13);
 }
-.quick-tool-panel--editor {
-  grid-column: 1 / -1;
-  width: 100%;
-  margin: 0;
-}
 .document-creator {
   width: min(1100px, calc(100% - 32px));
   margin: 0 auto 60px;
