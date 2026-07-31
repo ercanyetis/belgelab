@@ -25,11 +25,13 @@
     "pdf-crop": { type: "quick", value: "crop" },
     "pdf-compare": { type: "quick", value: "compare" },
     "pdf-to-markdown": { type: "quick", value: "markdown" },
+    "pdf-redact": { type: "redaction" },
   };
 
   function closeTransientWorkspaces() {
     window.BelgeLabTools?.close();
     window.BelgeLabCreators?.close();
+    window.BelgeLabRedaction?.close();
   }
 
   function focusWorkspace(workspace) {
@@ -60,6 +62,7 @@
     else if (entry.type === "creator") workspace = window.BelgeLabCreators?.open(entry.value);
     else if (entry.type === "operation") workspace = window.BelgeLabApp?.openOperation(entry.value);
     else if (entry.type === "editor") workspace = window.BelgeLabApp?.openEditor();
+    else if (entry.type === "redaction") workspace = window.BelgeLabRedaction?.open();
     if (!workspace) return showToolsFallback();
     focusWorkspace(workspace);
     return true;

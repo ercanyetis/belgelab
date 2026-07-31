@@ -161,6 +161,11 @@
           <strong>PDF'i düzenle</strong>
           <span>Sayfaları önizleyin, düzenlemelerinizi uygulayın ve yeni kopyayı cihazınıza kaydedin.</span>
         </button>
+        <button class="tool-card" data-category="security edit" data-tool-id="pdf-redact">
+          <span class="tool-icon security-icon" aria-hidden="true">■</span>
+          <strong>PDF Sansürleme</strong>
+          <span>PDF dosyanızdaki kişisel, gizli veya hassas bilgileri kalıcı olarak kapatın.</span>
+        </button>
         <button class="tool-card" data-category="convert" data-pdf-tool="pdf-to-jpg" data-tool-id="pdf-to-jpg">
           <span class="tool-icon image-icon" aria-hidden="true">JPG</span>
           <strong>PDF'den JPG'ye</strong>
@@ -285,6 +290,38 @@
 
         <button id="saveCreatedDocument" class="save-created-document" type="button">Belgeyi kaydet</button>
         <p id="creatorStatus" class="status">Düzenlemeye başlayabilirsiniz.</p>
+      </section>
+
+      <section class="panel redaction-tool" id="redactionTool" aria-labelledby="redactionTitle" hidden>
+        <div class="quick-tool-heading">
+          <div><span class="eyebrow">GÜVENLİ PDF ARACI</span><h2 id="redactionTitle">PDF Sansürleme</h2><p>PDF dosyanızdaki kişisel, gizli veya hassas bilgileri kalıcı olarak kapatın.</p></div>
+          <button id="closeRedaction" class="secondary" type="button">Kapat</button>
+        </div>
+        <p class="processing-notice processing-notice--server"><strong>Sunucuda güvenli işlenir</strong> Çıktı sayfaları düzleştirilir; kapatılan içerik metin veya kaldırılabilir katman olarak korunmaz.</p>
+        <input id="redactionFile" type="file" accept="application/pdf,.pdf" hidden>
+        <div id="redactionEmpty">
+          <button id="redactionPicker" class="converter-dropzone redaction-picker" type="button"><strong>Sansürlenecek PDF'i seçin</strong><span>PDF · En fazla 16 MB</span></button>
+        </div>
+        <div id="redactionWorkspace" hidden>
+          <div class="redaction-filebar"><strong id="redactionFileName"></strong><div><button id="chooseAnotherRedactionFile" class="secondary" type="button">Başka dosya seç</button><button id="removeRedactionFile" class="secondary danger-action" type="button">Dosyayı kaldır</button></div></div>
+          <div class="redaction-toolbar" role="toolbar" aria-label="Sansürleme kontrolleri">
+            <button id="addRedactionArea" type="button" data-needs-pdf>Sansür Alanı Ekle</button>
+            <button id="deleteRedaction" class="secondary" type="button" disabled>Seçili Alanı Sil</button>
+            <button id="clearPageRedactions" class="secondary" type="button" disabled>Bu Sayfadaki Alanları Temizle</button>
+            <button id="clearAllRedactions" class="secondary" type="button" disabled>Tüm Alanları Temizle</button>
+          </div>
+          <div class="redaction-pagebar">
+            <button id="redactionPrev" class="secondary" type="button" data-needs-pdf aria-label="Önceki sayfa">←</button>
+            <span id="redactionPageLabel" aria-live="polite">Sayfa 1 / 1</span>
+            <button id="redactionNext" class="secondary" type="button" data-needs-pdf aria-label="Sonraki sayfa">→</button>
+            <button id="redactionZoomOut" class="secondary" type="button" data-needs-pdf aria-label="Uzaklaştır">− Uzaklaştır</button>
+            <button id="redactionZoomIn" class="secondary" type="button" data-needs-pdf aria-label="Yakınlaştır">+ Yakınlaştır</button>
+          </div>
+          <div class="redaction-scroll"><div id="redactionStage" class="redaction-stage" tabindex="0" aria-label="Sansür alanı çizme yüzeyi"><canvas id="redactionCanvas"></canvas><div id="redactionOverlay" class="redaction-overlay"></div></div></div>
+          <p class="redaction-hint">Alan çizmek için sürükleyin. Seçili alanı taşıyabilir veya köşe tutamaçlarından yeniden boyutlandırabilirsiniz.</p>
+          <button id="redactPdf" type="button" disabled>PDF'yi Sansürle</button>
+        </div>
+        <p id="redactionStatus" class="status" role="status" aria-live="polite">PDF dosyası seçilmedi.</p>
       </section>
 
       <section class="panel quick-tool-panel" id="quickTool" hidden>
@@ -494,8 +531,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="app.js?v=48"></script>
     <script src="tools.js?v=48"></script>
+    <script src="redaction.js?v=1"></script>
     <script src="creators.js?v=47"></script>
-    <script src="tool-navigation.js?v=48"></script>
+    <script src="tool-navigation.js?v=49"></script>
     <script src="/consent.js"></script>
     <script src="/ads.js"></script>
   </body>

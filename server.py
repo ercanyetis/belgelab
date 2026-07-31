@@ -1,6 +1,8 @@
 import difflib
 import io
+import json
 import logging
+import math
 import os
 import re
 import shutil
@@ -28,6 +30,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from pptx import Presentation
 from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -77,6 +80,7 @@ SUPPORTED_OPERATIONS = {
 APP_VERSION = "2.3.0"
 INVALID_XML_CHARS = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]")
 MAX_PDF_PAGES = 250
+MAX_REDACTION_AREAS = 1_000
 MAX_ARCHIVE_FILES = 10_000
 MAX_ARCHIVE_EXPANDED_BYTES = 64 * 1024 * 1024
 OFFICE_MARKERS = {
@@ -127,6 +131,80 @@ def validate_dwg_file(path: Path) -> None:
 def enforce_pdf_page_limit(reader: PdfReader) -> None:
     if len(reader.pages) > MAX_PDF_PAGES:
         raise ValueError(f"PDF en fazla {MAX_PDF_PAGES} sayfa içerebilir.")
+
+
+def parse_redaction_areas(value: str, page_count: int) -> dict[int, list[tuple[float, float, float, float]]]:
+    try:
+        raw_areas = json.loads(value)
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise ValueError("Sansür alanları okunamadı.") from exc
+    if not isinstance(raw_areas, list) or not raw_areas:
+        raise ValueError("En az bir sansür alanı ekleyin.")
+    if len(raw_areas) > MAX_REDACTION_AREAS:
+        raise ValueError(f"En fazla {MAX_REDACTION_AREAS} sansür alanı ekleyebilirsiniz.")
+
+    parsed: dict[int, list[tuple[float, float, float, float]]] = {}
+    for area in raw_areas:
+        if not isinstance(area, dict):
+            raise ValueError("Sansür alanı biçimi geçersiz.")
+        page = area.get("page")
+        if isinstance(page, bool) or not isinstance(page, int) or page < 1 or page > page_count:
+            raise ValueError("Sansür alanındaki sayfa numarası geçersiz.")
+        coordinates = []
+        for key in ("x", "y", "width", "height"):
+            coordinate = area.get(key)
+            if isinstance(coordinate, bool) or not isinstance(coordinate, (int, float)) or not math.isfinite(coordinate):
+                raise ValueError("Sansür alanı koordinatları geçersiz.")
+            coordinates.append(float(coordinate))
+        x, y, width, height = coordinates
+        if x < 0 or y < 0 or width <= 0 or height <= 0:
+            raise ValueError("Sansür alanı sayfa sınırları içinde olmalıdır.")
+        if x > 1 or y > 1 or width > 1 or height > 1 or x + width > 1.000001 or y + height > 1.000001:
+            raise ValueError("Sansür alanı sayfa sınırlarını aşıyor.")
+        if width < 0.005 or height < 0.005:
+            raise ValueError("Sansür alanı güvenli işlem için çok küçük.")
+        parsed.setdefault(page, []).append((x, y, width, height))
+    return parsed
+
+
+def create_secure_redacted_pdf(source_bytes: bytes, areas: dict[int, list[tuple[float, float, float, float]]]) -> bytes:
+    import pypdfium2 as pdfium
+    from PIL import ImageDraw
+
+    source = pdfium.PdfDocument(source_bytes)
+    output = io.BytesIO()
+    pdf_canvas = canvas.Canvas(output, pageCompression=1)
+    try:
+        for page_index in range(len(source)):
+            page = source[page_index]
+            try:
+                bitmap = page.render(scale=2.0)
+                try:
+                    image = bitmap.to_pil().convert("RGB")
+                finally:
+                    bitmap.close()
+            finally:
+                page.close()
+
+            draw = ImageDraw.Draw(image)
+            for x, y, width, height in areas.get(page_index + 1, []):
+                left = max(0, min(image.width, round(x * image.width)))
+                top = max(0, min(image.height, round(y * image.height)))
+                right = max(left + 1, min(image.width, round((x + width) * image.width)))
+                bottom = max(top + 1, min(image.height, round((y + height) * image.height)))
+                draw.rectangle((left, top, right, bottom), fill=(0, 0, 0))
+
+            page_width = image.width / 2.0
+            page_height = image.height / 2.0
+            pdf_canvas.setPageSize((page_width, page_height))
+            pdf_canvas.drawImage(ImageReader(image), 0, 0, width=page_width, height=page_height)
+            pdf_canvas.showPage()
+            image.close()
+        pdf_canvas.save()
+        return output.getvalue()
+    finally:
+        source.close()
+        output.close()
 
 
 def parse_split_ranges(mode: str, ranges_value: str, chunk_value: str, page_count: int) -> list[tuple[int, int]]:
@@ -1218,6 +1296,39 @@ def convert():
         download_name=response_name,
         mimetype=mime_types[output_suffix],
     )
+
+
+@app.post("/api/pdf-redact")
+@limiter.limit("10 per minute")
+def redact_pdf():
+    uploaded = request.files.get("file")
+    if not uploaded or not uploaded.filename:
+        return jsonify({"error": "PDF dosyası seçilmedi."}), 400
+    if Path(uploaded.filename).suffix.lower() != ".pdf":
+        return jsonify({"error": "Bu araç yalnızca PDF dosyalarını kabul eder."}), 400
+
+    try:
+        source_bytes = uploaded.read()
+        validate_pdf_bytes(source_bytes)
+        reader = PdfReader(io.BytesIO(source_bytes), strict=False)
+        if reader.is_encrypted:
+            return jsonify({"error": "Sansürlemeden önce PDF kilidini açın."}), 400
+        enforce_pdf_page_limit(reader)
+        if not reader.pages:
+            return jsonify({"error": "PDF içinde işlenebilecek sayfa bulunamadı."}), 400
+        areas = parse_redaction_areas(request.form.get("areas", ""), len(reader.pages))
+        output = create_secure_redacted_pdf(source_bytes, areas)
+        output_reader = PdfReader(io.BytesIO(output), strict=False)
+        if len(output_reader.pages) != len(reader.pages):
+            raise RuntimeError("Sansürlenmiş PDF sayfa sayısı doğrulanamadı.")
+        base_name = Path(uploaded.filename).stem.strip()
+        safe_base = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "_", base_name)[:80] or "belge"
+        return attachment_response(output, f"{safe_base}-sansurlenmis.pdf", "application/pdf")
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception:
+        logging.exception("PDF redaction failed")
+        return jsonify({"error": "PDF güvenli biçimde sansürlenemedi. Dosyayı kontrol edip yeniden deneyin."}), 422
 
 
 @app.post("/api/pdf-tool")
